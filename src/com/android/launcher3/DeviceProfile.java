@@ -274,6 +274,8 @@ public class DeviceProfile {
     public int flingToDeleteThresholdVelocity;
 
     private int mHotseatQsbSpaceBase; // LC-Note: This is to keep QSB space as a reference to be used later.
+    /** The profile's bottom gap before the user factor is applied. */
+    private int mHotseatBottomSpaceBase;
 
     /** Used only as an alternative to mocking when null values cannot be used. */
     @VisibleForTesting
@@ -609,6 +611,8 @@ public class DeviceProfile {
             hotseatBarBottomSpacePx = Math.min(
                     hotseatBarBottomSpacePx, pxFromDp(16, mMetrics));
         }
+
+        mHotseatBottomSpaceBase = hotseatBarBottomSpacePx;
 
         mHotseatQsbSpaceBase = hotseatQsbSpace;
 
@@ -960,8 +964,13 @@ public class DeviceProfile {
         
         int space = Math.abs(hotseatCellHeightPx / 2) - 16;
 
-        hotseatBarBottomSpacePx *= PreferenceCacheExtensionsKt
-            .firstCached(preferenceManager2.getHotseatBottomFactor());
+        // Scale the configured bottom gap. The profile value can be close to zero when the dock
+        // has no search bar, which used to make this slider do nothing at all; always scale from
+        // a sane baseline so the setting has a usable range, and never accumulate across calls.
+        float bottomFactor = PreferenceCacheExtensionsKt
+                .firstCached(preferenceManager2.getHotseatBottomFactor());
+        int bottomBase = Math.max(mHotseatBottomSpaceBase, pxFromDp(24, mMetrics));
+        hotseatBarBottomSpacePx = Math.max(0, Math.round(bottomBase * bottomFactor));
 
         // Extra height needed for additional dock rows
         int extraRowsHeight = (numHotseatRows - 1) * hotseatCellHeightPx;
