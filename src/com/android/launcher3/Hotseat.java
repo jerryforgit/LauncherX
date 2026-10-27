@@ -1082,41 +1082,34 @@ public class Hotseat extends FrameLayout implements Insettable {
         if ("full".equals(mode)) return true;
         if ("content".equals(mode)) return false;
         DeviceProfile dp = mActivity.getDeviceProfile();
-        if (!dp.getDeviceProperties().isPhone()) return false;
-        // A search box shares the dock bar, so keep the full-width bar in that case.
-        if (mQsb != null && mQsb.getVisibility() != GONE) return true;
-        return getOccupiedIconColumns(dp) >= Math.max(2, dp.numShownHotseatIcons - 1);
+        return dp.getDeviceProperties().isPhone();
     }
 
     /**
-     * Number of dock columns that actually contain an icon. Empty trailing slots are not
-     * counted, so the content-width dock can hug the apps that are really there.
+     * Number of dock icons that are actually bound to the current page. Used to decide whether
+     * the dock is empty, so its icon row can be collapsed when only the search bar is shown.
      */
-    private int getOccupiedIconColumns(DeviceProfile dp) {
-        int columns = 0;
+    private int getVisiblePinnedIconCount() {
+        int count = 0;
         if (mPagedView != null) {
             CellLayout page = mPagedView.getCurrentCellLayout();
             if (page != null) {
                 ViewGroup icons = page.getShortcutsAndWidgets();
                 for (int i = 0; i < icons.getChildCount(); i++) {
                     View child = icons.getChildAt(i);
-                    if (child.getVisibility() == GONE) continue;
-                    if (child.getLayoutParams()
-                            instanceof com.android.launcher3.celllayout.CellLayoutLayoutParams lp) {
-                        columns = Math.max(columns, lp.getCellX() + 1);
-                    } else {
-                        columns++;
-                    }
+                    if (child.getVisibility() != GONE) count++;
                 }
             }
         }
-        return Math.min(columns, getPinnedIconCount(dp));
+        return count;
     }
 
-    /** Width of the fixed dock row: one cell per occupied slot plus the configured gaps. The
-     * capsule adds its left/right inner padding around this row. */
+    /**
+     * Width of the fixed dock row: one cell per slot plus the configured gaps. The capsule adds
+     * its left/right inner padding around this row.
+     */
     private int getNaturalIconRowWidth(DeviceProfile dp) {
-        int count = Math.max(1, getOccupiedIconColumns(dp));
+        int count = getPinnedIconCount(dp);
         return dp.iconSizePx * count + getDockAppSpacingPx() * Math.max(0, count - 1);
     }
 
@@ -1406,6 +1399,49 @@ public class Hotseat extends FrameLayout implements Insettable {
         if (mCapsuleGlass != null) {
             computeContentBounds();
             updateCapsuleCornerRadius();
+        }
+
+        updateDockRowCollapsed();
+        refreshGlassModes();
+    }
+
+    /**
+     * Re-applies the glass mode. Preferences can still be loading when the hotseat is inflated on
+     * a cold start, and a pre-load read used to leave the capsule on the flat fallback colour
+     * until the launcher was restarted.
+     */
+    private void refreshGlassModes() {
+        if (mCapsuleGlass == null && mRegularGlass == null) return;
+        boolean liquidEnabled = PreferenceCacheExtensionsKt.firstCached(
+                preferenceManager2.getLiquidGlassEnabled());
+        if (mCapsuleGlass != null) {
+            mCapsuleGlass.setGlassMode(
+                    preferenceManager.getHotseatCapsuleFrostedGlass().get(),
+                    liquidEnabled && preferenceManager.getHotseatCapsuleLiquidGlass().get());
+        }
+        if (mRegularGlass != null) {
+            mRegularGlass.setGlassMode(
+                    preferenceManager.getHotseatBGFrostedGlass().get(),
+                    liquidEnabled && preferenceManager.getHotseatBGLiquidGlass().get());
+        }
+    }
+
+    /**
+     * Collapses the dock's reserved icon row when no icons are pinned to it, so a search-bar-only
+     * dock does not keep a full row of empty space above the bar. The profile is rebuilt on the
+     * next frame because its geometry is used for the workspace padding.
+     */
+    private void updateDockRowCollapsed() {
+        if (mActivity == null || !isAttachedToWindow()) return;
+        int iconCount = getVisiblePinnedIconCount();
+        boolean recentVisible = mRecentAppsView != null
+                && mRecentAppsView.getVisibility() != GONE
+                && mRecentAppsView.getWidth() > 0;
+        boolean empty = iconCount == 0 && !recentVisible;
+        if (preferenceManager.getDockRowCollapsed().get() == empty) return;
+        preferenceManager.getDockRowCollapsed().set(empty);
+        if (mActivity.getDeviceProfile().updateDockRowCollapsed()) {
+            post(mActivity::dispatchDeviceProfileChanged);
         }
     }
 

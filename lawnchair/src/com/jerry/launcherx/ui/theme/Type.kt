@@ -53,3 +53,10 @@ val Typography = Typography(
     labelMediumEmphasized = base.labelMediumEmphasized.copy(fontFamily = GoogleSansFlex.Label.Emphasized.Medium),
     labelSmallEmphasized = base.labelSmallEmphasized.copy(fontFamily = GoogleSansFlex.Label.Emphasized.Small),
 )
+
+/**
+ * Material 3 defaults, i.e. the platform font (Roboto plus the system CJK fallback). Used on
+ * non-English systems, where Google Sans Flex would render Latin and CJK text at different
+ * weights.
+ */
+val SystemTypography: Typography = androidx.compose.material3.Typography()

@@ -17,6 +17,8 @@ large-folder swiper, a Launchpad widget, and more.
 
 [中文说明](README.zh-CN.md)
 
+Technical notes: [Liquid glass implementation](docs/LIQUID_GLASS.md)
+
 ---
 
 ## Status

@@ -12,6 +12,7 @@ import com.jerry.launcherx.preferences.PreferenceManager
 import com.jerry.launcherx.util.lookupLifecycleOwner
 import com.jerry.launcherx.util.runOnMainThread
 import com.android.launcher3.R
+import com.android.launcher3.Utilities
 import com.android.launcher3.dagger.ApplicationContext
 import com.android.launcher3.dagger.LauncherAppComponent
 import com.android.launcher3.dagger.LauncherAppSingleton
@@ -31,6 +32,13 @@ class FontManager @Inject constructor(
 
     private val variableFonts = mutableMapOf<String, FontCache.Font>()
 
+    /**
+     * Google Sans Flex has no CJK coverage. On a non-English system the Latin labels render at
+     * the custom weight while CJK characters fall back to the system font's regular weight,
+     * which makes e.g. the app drawer look inconsistent. Use the platform font there instead.
+     */
+    private val useSystemFont = !Utilities.isEnglishLanguage(context)
+
     private fun createFontMap(): Map<Int, FontSpec> {
         val sansSerif = Typeface.SANS_SERIF
         val sansSerifMedium = Typeface.create("sans-serif-medium", Typeface.NORMAL)
@@ -44,6 +52,13 @@ class FontManager @Inject constructor(
             R.id.font_body to FontSpec(prefs.fontBody, sansSerif),
             R.id.font_body_medium to FontSpec(prefs.fontBodyMedium, sansSerif),
         )
+    }
+
+    /** True when the user kept the bundled default font for [type]. */
+    private fun isDefaultFont(type: Int): Boolean = when (type) {
+        R.id.font_base_icon -> PreferenceManager.getInstance(context).fontWorkspace.get() ==
+            fontCache.uiText
+        else -> false
     }
 
     fun overrideFont(textView: TextView, attrs: AttributeSet?) {
@@ -83,6 +98,11 @@ class FontManager @Inject constructor(
 
             val gsfAxes = GoogleSansFlexVariableFont.axesFor(fontFamily)
             if (gsfAxes != null) {
+                if (useSystemFont) {
+                    // Let CJK and Latin share one family/weight on non-English systems.
+                    applySystemFont(textView)
+                    return
+                }
                 val font = variableFonts.getOrPut(fontFamily!!) {
                     fontCache.googleSansFlexVariable(gsfAxes)
                 }
@@ -91,6 +111,10 @@ class FontManager @Inject constructor(
             }
 
             if (fontType != -1) {
+                if (useSystemFont && isDefaultFont(fontType)) {
+                    applySystemFont(textView)
+                    return
+                }
                 setCustomFont(textView, fontType, fontWeight)
             }
         } catch (_: Exception) {
@@ -101,6 +125,10 @@ class FontManager @Inject constructor(
     fun setCustomFont(textView: TextView, @IdRes type: Int, style: Int = -1) {
         val spec = specMap[type] ?: return
         applyFont(textView, spec.font.createWithWeight(style), spec.fallback)
+    }
+
+    private fun applySystemFont(textView: TextView) {
+        textView.typeface = Typeface.SANS_SERIF
     }
 
     private fun applyFont(textView: TextView, font: FontCache.Font, fallback: Typeface? = null) {

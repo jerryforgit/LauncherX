@@ -342,6 +342,7 @@ public class DeviceProfile {
         mAllAppsProfile = new AllAppsProfile(new Point(0, 0), 0, 0, 0f, 0, 0, 0);
         mTextFactors = new TextFactors(0,0,0);
         preferenceManager2 = null;
+        mPreferenceManager = null;
     }
 
     private final TextFactors mTextFactors;
@@ -351,6 +352,9 @@ public class DeviceProfile {
     private float widgetPaddingFactor;
     private float drawerPaddingTopFactor;
     private PreferenceManager2 preferenceManager2 = null;
+    private final PreferenceManager mPreferenceManager;
+    /** True while the dock has no icons, so its reserved icon row is collapsed. */
+    private boolean mDockRowCollapsed;
 
     /** TODO: Once we fully migrate to staged split, remove "isMultiWindowMode" */
     DeviceProfile(Context context, InvariantDeviceProfile inv, Info info,
@@ -362,6 +366,8 @@ public class DeviceProfile {
             boolean isTransientTaskbar, DisplayOptionSpec displayOptionSpec) {
         mTextFactors = DeviceProfileOverrides.INSTANCE.get(context).getTextFactors();
 
+        mPreferenceManager = PreferenceManager.getInstance(context);
+        mDockRowCollapsed = mPreferenceManager.getDockRowCollapsed().get();
         preferenceManager2 = PreferenceManager2.INSTANCE.get(context);
         allAppsCellHeightMultiplier = PreferenceCacheExtensionsKt
                 .firstCached(preferenceManager2.getDrawerCellHeightFactor());
@@ -915,6 +921,19 @@ public class DeviceProfile {
         }
     }
 
+    /**
+     * Re-reads the "dock has no icons" state and rebuilds the dock geometry if it changed.
+     * Returns true when the profile changed, so the caller can dispatch a profile update.
+     */
+    public boolean updateDockRowCollapsed() {
+        if (mPreferenceManager == null) return false;
+        boolean collapsed = mPreferenceManager.getDockRowCollapsed().get();
+        if (collapsed == mDockRowCollapsed) return false;
+        mDockRowCollapsed = collapsed;
+        updateHotseatSizes(iconSizePx);
+        return true;
+    }
+
     /** Updates hotseatCellHeightPx and hotseatBarSizePx */
     private void updateHotseatSizes(int hotseatIconSizePx) {
         int iconTextHeight = Utilities.calculateTextHeight(iconTextSizePx);
@@ -958,6 +977,10 @@ public class DeviceProfile {
         var isHotseatEnabled = PreferenceCacheExtensionsKt.firstCached(preferenceManager2.isHotseatEnabled());
         if (!isHotseatEnabled) {
             hotseatBarSizePx = 0;
+        } else if (!isVerticalBarLayout() && mDockRowCollapsed) {
+            // The dock contains no icons, so its reserved icon row is empty space. Drop it and
+            // keep just the search bar, giving the free height back to the workspace.
+            hotseatBarSizePx = Math.max(0, hotseatBarSizePx - hotseatCellHeightPx);
         }
     }
 

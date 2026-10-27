@@ -53,9 +53,13 @@ fun LauncherXTheme(
     content: @Composable () -> Unit,
 ) {
     val colorScheme = getColorScheme(darkTheme = darkTheme)
+    val context = LocalContext.current
+    // Google Sans Flex has no CJK glyphs; fall back to the platform font on non-English systems so
+    // Latin and CJK text share one family and weight.
+    val typography = if (Utilities.isEnglishLanguage(context)) Typography else SystemTypography
     MaterialExpressiveTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = typography,
         content = content,
         shapes = Shapes,
         motionScheme = MotionScheme.expressive(),

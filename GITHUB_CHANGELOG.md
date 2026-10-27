@@ -23,7 +23,12 @@ Highlights in this build:
 - Back key now closes the app drawer on Android 13 and older (previously the UP event
   was consumed without dispatching the back action on those versions).
 - The app-drawer haptic is off by default (still available in Settings > App drawer).
-- Tighter dock: 56dp search bar and a 24dp bottom gap instead of 64dp/48dp.
+- Tighter dock: 48dp search bar on phones (56dp on tablets) and a 24dp bottom gap.
+- The dock drops its empty icon row when no apps are pinned to it.
+- Non-English systems use the platform font for labels and Compose text, so Latin and CJK
+  glyphs share one family/weight (Google Sans Flex has no CJK coverage).
+- Liquid glass: `docs/LIQUID_GLASS.md` documents the whole pipeline (backdrop cache,
+  refraction shader, parameters, pitfalls) for reuse in other projects.
 - Remove LeakCanary from debug builds, so the separate “Leaks” launcher entry is gone.
 - Source package renamed from `app.lawnchair` to `com.jerry.launcherx`
   (`app.lawnchair.icons`, `com.android.launcher3`, and the external

@@ -198,6 +198,12 @@ class PreferenceManager @Inject constructor(
     val hotseatBGLiquidGlass = BoolPref("pref_hotseatBGLiquidGlass", false, recreate)
     val hotseatBGGlassBlur = FloatPref("pref_hotseatBGGlassBlur", 28F, recreate)
 
+    /**
+     * True while the dock has no icons at all. The dock then drops its reserved icon row so a
+     * search-bar-only dock does not leave a full row of dead space above it.
+     */
+    val dockRowCollapsed = BoolPref("pref_dockRowCollapsed", false)
+
     val hotseatRecentAppsEnabled = BoolPref("pref_hotseatRecentAppsEnabled", false, recreate)
     val hotseatRecentAppsMaxCount = IntPref("pref_hotseatRecentAppsMaxCount", 3) {
         RecentAppsManager.getInstance(context).refreshNow()

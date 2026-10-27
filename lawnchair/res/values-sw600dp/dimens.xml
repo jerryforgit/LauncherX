@@ -20,6 +20,7 @@
     <dimen name="min_hotseat_icon_space">17dp</dimen>
     <dimen name="min_page_snap_velocity">3000dp</dimen>
     <dimen name="navigation_key_padding">25dp</dimen>
+    <dimen name="qsb_widget_height">56dp</dimen>
     <dimen name="overview_actions_top_margin">24dp</dimen>
     <dimen name="overview_grid_row_spacing">28dp</dimen>
     <dimen name="overview_grid_side_margin">64dp</dimen>
