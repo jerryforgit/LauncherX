@@ -232,6 +232,9 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
     /** Duration for a batch-drag follower to glide from the release point into its cell. */
     private static final long SETTLE_ANIMATION_DURATION = 200L;
 
+    /** Gap between the workspace page indicator and the dock, in dp. */
+    private static final float PAGE_INDICATOR_DOCK_GAP_DP = 6f;
+
     /**
      * Target drop area calculated during last acceptDrop call.
      */
@@ -435,7 +438,11 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
         } else {
             lp.leftMargin = lp.rightMargin = 0;
             lp.gravity = Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM;
-            lp.bottomMargin = grid.hotseatBarSizePx - grid.workspaceCellPaddingXPx;
+            // Keep a small gap above the dock so the dots never touch the dock icons or the
+            // label of the workspace's last row.
+            int dockGap = Math.round(PAGE_INDICATOR_DOCK_GAP_DP
+                    * getResources().getDisplayMetrics().density);
+            lp.bottomMargin = grid.hotseatBarSizePx + dockGap;
         }
         mPageIndicator.setLayoutParams(lp);
     }

@@ -280,6 +280,8 @@ public class Hotseat extends FrameLayout implements Insettable {
      */
     private float mGlassVisibility = 1f;
     private boolean mFolderPopupActive;
+    /** Whether the dock geometry has been re-synced after the first layout. */
+    private boolean mDockGeometrySynced;
     private float mFolderPopupBaseElevation;
     private final android.graphics.RectF mRegularRect = new android.graphics.RectF();
     private int mRegularInsetLeftPx;
@@ -304,6 +306,8 @@ public class Hotseat extends FrameLayout implements Insettable {
             setUpCapsuleBackground();
         } else {
             clearCapsuleBackground();
+            // Margins/paddings also drive the dock insets, so keep them loaded.
+            loadCapsuleInsets();
         }
         setUpRegularBackground();
         applyGlassVisibility();
@@ -442,14 +446,13 @@ public class Hotseat extends FrameLayout implements Insettable {
                 getHeight() - mRegularInsetBottomPx);
     }
 
-    private void setUpCapsuleBackground() {
-        var bgColor = PreferenceCacheExtensionsKt.firstCached(preferenceManager2.getHotseatBackgroundColor());
-        var transparency = preferenceManager.getHotseatBGAlpha().get();
-        var alphaValue = (transparency * 255) / 100;
-        var baseColor = bgColor.getColorPreferenceEntry().getLightColor().invoke(getContext());
-
+    /**
+     * Loads the capsule margins and inner paddings. These drive the dock's content insets as well
+     * as the capsule itself, so they are applied even when the capsule background is disabled
+     * (otherwise the matching settings sliders would silently do nothing).
+     */
+    private void loadCapsuleInsets() {
         float density = getResources().getDisplayMetrics().density;
-        float elevationDp = preferenceManager.getHotseatCapsuleElevation().get();
         mCapsuleMarginBottomPx = Math.round(preferenceManager.getHotseatCapsuleMarginBottom().get() * density);
         mCapsuleMarginTopPx = Math.round(preferenceManager.getHotseatCapsuleMarginTop().get() * density);
         mCapsuleMarginLeftPx = Math.round(preferenceManager.getHotseatCapsuleMarginLeft().get() * density);
@@ -458,6 +461,17 @@ public class Hotseat extends FrameLayout implements Insettable {
         mCapsuleInnerPaddingRightPx = Math.round(preferenceManager.getHotseatCapsuleInnerPaddingRight().get() * density);
         mCapsuleInnerPaddingTopPx = Math.round(preferenceManager.getHotseatCapsuleInnerPaddingTop().get() * density);
         mCapsuleInnerPaddingBottomPx = Math.round(preferenceManager.getHotseatCapsuleInnerPaddingBottom().get() * density);
+    }
+
+    private void setUpCapsuleBackground() {
+        var bgColor = PreferenceCacheExtensionsKt.firstCached(preferenceManager2.getHotseatBackgroundColor());
+        var transparency = preferenceManager.getHotseatBGAlpha().get();
+        var alphaValue = (transparency * 255) / 100;
+        var baseColor = bgColor.getColorPreferenceEntry().getLightColor().invoke(getContext());
+
+        float density = getResources().getDisplayMetrics().density;
+        float elevationDp = preferenceManager.getHotseatCapsuleElevation().get();
+        loadCapsuleInsets();
         mCapsuleCornerRadiusDp = preferenceManager.getHotseatCapsuleCornerRadius().get();
 
         mCapsuleGlass = new com.jerry.launcherx.glass.GlassCardBackground(getContext());
@@ -986,7 +1000,6 @@ public class Hotseat extends FrameLayout implements Insettable {
      * be negative, and it does not know about the capsule margins.
      */
     private int getContentInsetTop() {
-        if (mCapsuleGlass == null) return getPaddingTop();
         // Content inset uses only the margin. Inner padding is applied later
         // in computeContentBounds when expanding the capsule around content.
         // This keeps the content vertically centered in the dock regardless
@@ -997,18 +1010,15 @@ public class Hotseat extends FrameLayout implements Insettable {
     }
 
     private int getContentInsetBottom() {
-        if (mCapsuleGlass == null) return getPaddingBottom();
         int margin = Math.max(mCapsuleMarginTopPx, mCapsuleMarginBottomPx);
         return Math.max(getPaddingBottom(), margin);
     }
 
     private int getContentInsetLeft() {
-        if (mCapsuleGlass == null) return getPaddingLeft();
         return Math.max(getPaddingLeft(), mCapsuleMarginLeftPx);
     }
 
     private int getContentInsetRight() {
-        if (mCapsuleGlass == null) return getPaddingRight();
         return Math.max(getPaddingRight(), mCapsuleMarginRightPx);
     }
 
@@ -1403,6 +1413,21 @@ public class Hotseat extends FrameLayout implements Insettable {
 
         updateDockRowCollapsed();
         refreshGlassModes();
+        syncDockGeometryOnce();
+    }
+
+    /**
+     * The device profile (and therefore the workspace bottom padding) can be built before the
+     * launcher model and the hotseat preferences are ready, leaving the grid laid out over the
+     * dock and the page indicator. Recompute once after the first real layout.
+     */
+    private void syncDockGeometryOnce() {
+        if (mDockGeometrySynced || mActivity == null || !isAttachedToWindow()) return;
+        mDockGeometrySynced = true;
+        post(() -> {
+            mActivity.getDeviceProfile().refreshDockGeometry();
+            mActivity.dispatchDeviceProfileChanged();
+        });
     }
 
     /**

@@ -922,6 +922,16 @@ public class DeviceProfile {
     }
 
     /**
+     * Recomputes the dock geometry and the workspace padding from the current state. Used once
+     * the dock contents are known, because the padding is derived from the dock height and the
+     * profile can be built before the launcher model (or the hotseat preferences) are ready.
+     */
+    public void refreshDockGeometry() {
+        updateHotseatSizes(iconSizePx);
+        updateWorkspacePadding();
+    }
+
+    /**
      * Re-reads the "dock has no icons" state and rebuilds the dock geometry if it changed.
      * Returns true when the profile changed, so the caller can dispatch a profile update.
      */
@@ -931,6 +941,8 @@ public class DeviceProfile {
         if (collapsed == mDockRowCollapsed) return false;
         mDockRowCollapsed = collapsed;
         updateHotseatSizes(iconSizePx);
+        // The workspace padding is derived from the dock height, so it has to follow along.
+        updateWorkspacePadding();
         return true;
     }
 
@@ -1851,10 +1863,10 @@ public class DeviceProfile {
             // Pad the bottom of the workspace with hotseat bar
             // and leave a bit of space in case a widget go all the way down
             int paddingBottom = hotseatBarSizePx + workspaceBottomPadding - mInsets.bottom;
-            if (!mIsResponsiveGrid) {
-                paddingBottom +=
-                        workspacePageIndicatorHeight - mWorkspacePageIndicatorOverlapWorkspace;
-            }
+            // Always reserve the page-indicator band, including for responsive grids: otherwise
+            // the last icon row is laid out over the indicator and the dock.
+            paddingBottom +=
+                    workspacePageIndicatorHeight - mWorkspacePageIndicatorOverlapWorkspace;
             int paddingTop = workspaceTopPadding + (mIsScalableGrid ? 0 : edgeMarginPx);
             int paddingLeft = desiredWorkspaceHorizontalMarginPx;
             int paddingRight = desiredWorkspaceHorizontalMarginPx;
