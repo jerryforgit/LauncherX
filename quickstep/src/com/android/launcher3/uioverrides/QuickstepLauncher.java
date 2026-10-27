@@ -1052,7 +1052,14 @@ public class QuickstepLauncher extends Launcher implements RecentsViewContainer,
             return false;
         }
 
-        if (Utilities.ATLEAST_U) getOnBackAnimationCallback().onBackInvoked();
+        if (Utilities.ATLEAST_U) {
+            getOnBackAnimationCallback().onBackInvoked();
+        } else {
+            // Pre-Android 14: consume the UP event like below, but dispatch it ourselves.
+            // Activity#onKeyUp would normally call onBackPressed(), and swallowing the event
+            // here would leave the back key doing nothing (e.g. the app drawer would not close).
+            onBackPressed();
+        }
         return true;
     }
 

@@ -20,6 +20,10 @@ Highlights in this build:
   84dp rows instead of 65dp icons in 104dp rows), and the dock/search bar shows a
   “Search apps” hint instead of an empty pill. In Auto mode a sparse phone dock now
   hugs its icons instead of stretching into an empty full-width bar.
+- Back key now closes the app drawer on Android 13 and older (previously the UP event
+  was consumed without dispatching the back action on those versions).
+- The app-drawer haptic is off by default (still available in Settings > App drawer).
+- Tighter dock: 56dp search bar and a 24dp bottom gap instead of 64dp/48dp.
 - Remove LeakCanary from debug builds, so the separate “Leaks” launcher entry is gone.
 - Source package renamed from `app.lawnchair` to `com.jerry.launcherx`
   (`app.lawnchair.icons`, `com.android.launcher3`, and the external

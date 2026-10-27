@@ -596,6 +596,14 @@ public class DeviceProfile {
             }
         }
 
+        // Some devices hide the navigation bar on the home screen (e.g. MIUI), which leaves no
+        // bottom inset. The profile's fixed 48dp gap then becomes dead space under the dock, so
+        // keep only a small margin and let the dock/search bar sit near the bottom edge.
+        if (!isVerticalBarLayout() && mInsets.bottom == 0) {
+            hotseatBarBottomSpacePx = Math.min(
+                    hotseatBarBottomSpacePx, pxFromDp(16, mMetrics));
+        }
+
         mHotseatQsbSpaceBase = hotseatQsbSpace;
 
         if (mIsResponsiveGrid) {

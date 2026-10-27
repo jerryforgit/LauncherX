@@ -73,7 +73,9 @@
 
     <!-- Scalable Grid configuration -->
     <!-- This is a float because it is converted to dp later in DeviceProfile -->
-    <dimen name="hotseat_bar_bottom_space_default">48</dimen>
+    <!-- Gap under the dock. 24dp keeps the dock/search bar near the bottom edge on devices
+         whose launcher window already covers the navigation area. -->
+    <dimen name="hotseat_bar_bottom_space_default">24</dimen>
     <dimen name="hotseat_qsb_space_default">0</dimen>
 
     <!-- Whether to enable background preloading of task thumbnails. -->
