@@ -25,7 +25,9 @@ This file is a practical checklist for publishing LauncherX. It is not part of t
 - New LauncherX adaptive/monochrome launcher icon.
 - Android 8.x fallbacks: icon/label sizing and opaque app-drawer background below Android 12.
 
-## 2. Before the first push
+## 2. Before a later push
+
+The initial push has been completed. Use this section when preparing future pushes.
 
 Run these from the repository root:
 
@@ -77,8 +79,8 @@ Create an **empty** repository on GitHub named `LauncherX` (no README, no licens
 # The existing remote points at Lawnchair. Keep it for upstream merges:
 git remote rename origin upstream
 
-git remote add origin git@github.com:<OWNER>/LauncherX.git
-# or: git remote add origin https://github.com/<OWNER>/LauncherX.git
+git remote add origin git@github.com:jerryforgit/LauncherX.git
+# or: git remote add origin https://github.com/jerryforgit/LauncherX.git
 
 git add -A
 git commit -m "LauncherX: fork of Lawnchair 16 with liquid-glass dock and dock slot animation"
@@ -144,9 +146,8 @@ roughly 563 MiB. That is below GitHub's hard limits but makes the first push slo
 smaller public repository, an orphan initial commit is an option; do not use `git filter-repo`
 on the only copy without a backup.
 
-## 8. After the first push
+## 8. After a push
 
-- Replace `<your-repo-url>` in the README clone command.
 - Add CI badges and screenshot(s) if desired.
 - Configure signing secrets.
 - Create a first release from the `com.jerry.launcherx` APK.

@@ -4,6 +4,8 @@
 [Lawnchair 16](https://github.com/LawnchairLauncher/lawnchair), which itself is based on
 Android's [Launcher3](https://source.android.com/docs/core/architecture/modular-system/launcher3).
 
+Repository: [github.com/jerryforgit/LauncherX](https://github.com/jerryforgit/LauncherX)
+
 It keeps Lawnchair's Pixel-style foundation and adds a set of focused, experimental
 customizations: a liquid-glass dock, iPhone-style dock slots with sliding reordering, a
 large-folder swiper, a Launchpad widget, and more.
@@ -68,7 +70,7 @@ Some features are still work in progress. See [Known limitations](#known-limitat
 ### From the command line
 
 ```bash
-git clone --recurse-submodules <your-repo-url> LauncherX
+git clone --recurse-submodules https://github.com/jerryforgit/LauncherX.git LauncherX
 cd LauncherX
 
 # Point Gradle at your Android SDK (or open the project in Android Studio)

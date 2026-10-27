@@ -4,6 +4,8 @@
 [Lawnchair 16](https://github.com/LawnchairLauncher/lawnchair)，而 Lawnchair 又基于 Android
 的 [Launcher3](https://source.android.com/docs/core/architecture/modular-system/launcher3)。
 
+仓库：[github.com/jerryforgit/LauncherX](https://github.com/jerryforgit/LauncherX)
+
 它保留 Lawnchair 的 Pixel 风格基础，并加入一些我自己维护的定制功能：液态玻璃 Dock、iPhone
 式 Dock 槽位和补位动画、大文件夹滑动分页、启动台小组件等。
 
@@ -63,7 +65,7 @@ LauncherX 使用独立的包名，可以和 Lawnchair 同时安装：
 ### 命令行
 
 ```bash
-git clone --recurse-submodules <你的仓库地址> LauncherX
+git clone --recurse-submodules https://github.com/jerryforgit/LauncherX.git LauncherX
 cd LauncherX
 
 # 指定 Android SDK（也可以直接用 Android Studio 打开）
