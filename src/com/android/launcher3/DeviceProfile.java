@@ -1408,6 +1408,29 @@ public class DeviceProfile {
                     allAppsCellHeightMultiplier
             );
         }
+        // Phones can end up with a 65dp all-apps icon and a 120dp row even when the workspace
+        // icon is only 48dp. Keep the drawer compact and visually consistent with the workspace.
+        if (!mIsResponsiveGrid && mDeviceProperties.isPhone()) {
+            AllAppsProfile p = mAllAppsProfile;
+            int maxIcon = Math.min(p.getIconSizePx(), iconSizePx);
+            if (maxIcon < p.getIconSizePx()) {
+                int padding = p.getIconDrawablePaddingPx();
+                int textSize = Math.min((int) p.getIconTextSizePx(), pxFromSp(12, mMetrics));
+                int cellWidth = Math.min(p.getCellWidthPx(),
+                        maxIcon + 2 * padding + pxFromDp(8, mMetrics));
+                int textHeight = Utilities.calculateTextHeight(textSize);
+                // Icon + label + a small breathing gap. The stock 104dp row is meant for
+                // 65dp icons; with 48dp icons it leaves a large empty band under every label.
+                int cellHeight = Math.min(p.getCellHeightPx(),
+                        maxIcon + padding + textHeight + pxFromDp(12, mMetrics));
+                mAllAppsProfile = p.copyWithCompactMetrics(
+                        maxIcon,
+                        textSize,
+                        cellWidth,
+                        cellHeight
+                );
+            }
+        }
         updateAllAppsContainerWidth();
         if (isVerticalLayout && !mIsResponsiveGrid) {
             hideWorkspaceLabelsIfNotEnoughSpace();

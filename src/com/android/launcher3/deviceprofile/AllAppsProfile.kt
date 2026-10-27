@@ -51,6 +51,24 @@ data class AllAppsProfile(
         return copy(cellHeightPx = newCellHeightPx)
     }
 
+    /**
+     * Return a new AllAppsProfile with compact phone metrics. This function is needed for the java
+     * code, which cannot use Kotlin named arguments.
+     */
+    fun copyWithCompactMetrics(
+        newIconSizePx: Int,
+        newIconTextSizePx: Float,
+        newCellWidthPx: Int,
+        newCellHeightPx: Int,
+    ): AllAppsProfile {
+        return copy(
+            cellHeightPx = newCellHeightPx,
+            iconSizePx = newIconSizePx,
+            iconTextSizePx = newIconTextSizePx,
+            cellWidthPx = newCellWidthPx,
+        )
+    }
+
     companion object Factory {
 
         private fun calculateAllAppsBorderSpacePx(

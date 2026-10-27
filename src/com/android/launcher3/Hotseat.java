@@ -1073,22 +1073,50 @@ public class Hotseat extends FrameLayout implements Insettable {
 
     /**
      * Whether the dock bar should span the available width instead of hugging its content.
-     * Auto follows the form factor: phones full width, tablets content width.
+     * Auto follows the form factor: a phone dock is full width once it is (nearly) full,
+     * and hugs its icons when it only holds a couple of apps, so it never renders as a long
+     * empty bar. Tablets always hug their content.
      */
     private boolean isFullWidthDock() {
         String mode = preferenceManager.getHotseatDockWidthMode().get();
         if ("full".equals(mode)) return true;
         if ("content".equals(mode)) return false;
         DeviceProfile dp = mActivity.getDeviceProfile();
-        return dp.getDeviceProperties().isPhone();
+        if (!dp.getDeviceProperties().isPhone()) return false;
+        // A search box shares the dock bar, so keep the full-width bar in that case.
+        if (mQsb != null && mQsb.getVisibility() != GONE) return true;
+        return getOccupiedIconColumns(dp) >= Math.max(2, dp.numShownHotseatIcons - 1);
     }
 
     /**
-     * Width of the fixed dock row: one cell per slot plus the configured gaps. The capsule
-     * adds its left/right inner padding around this row.
+     * Number of dock columns that actually contain an icon. Empty trailing slots are not
+     * counted, so the content-width dock can hug the apps that are really there.
      */
+    private int getOccupiedIconColumns(DeviceProfile dp) {
+        int columns = 0;
+        if (mPagedView != null) {
+            CellLayout page = mPagedView.getCurrentCellLayout();
+            if (page != null) {
+                ViewGroup icons = page.getShortcutsAndWidgets();
+                for (int i = 0; i < icons.getChildCount(); i++) {
+                    View child = icons.getChildAt(i);
+                    if (child.getVisibility() == GONE) continue;
+                    if (child.getLayoutParams()
+                            instanceof com.android.launcher3.celllayout.CellLayoutLayoutParams lp) {
+                        columns = Math.max(columns, lp.getCellX() + 1);
+                    } else {
+                        columns++;
+                    }
+                }
+            }
+        }
+        return Math.min(columns, getPinnedIconCount(dp));
+    }
+
+    /** Width of the fixed dock row: one cell per occupied slot plus the configured gaps. The
+     * capsule adds its left/right inner padding around this row. */
     private int getNaturalIconRowWidth(DeviceProfile dp) {
-        int count = getPinnedIconCount(dp);
+        int count = Math.max(1, getOccupiedIconColumns(dp));
         return dp.iconSizePx * count + getDockAppSpacingPx() * Math.max(0, count - 1);
     }
 

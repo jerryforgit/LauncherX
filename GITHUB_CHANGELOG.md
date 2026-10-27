@@ -16,6 +16,10 @@ Highlights in this build:
 - Chinese name **X 桌面** for zh-CN / zh-TW / zh-HK.
 - Android 8.x fixes: label padding/icon sizing on small cells, and an opaque app-drawer
   background before Android 12 (no blur available).
+- Phone polish: the App Drawer now matches the workspace (48dp icons, 12sp labels,
+  84dp rows instead of 65dp icons in 104dp rows), and the dock/search bar shows a
+  “Search apps” hint instead of an empty pill. In Auto mode a sparse phone dock now
+  hugs its icons instead of stretching into an empty full-width bar.
 - Remove LeakCanary from debug builds, so the separate “Leaks” launcher entry is gone.
 - Source package renamed from `app.lawnchair` to `com.jerry.launcherx`
   (`app.lawnchair.icons`, `com.android.launcher3`, and the external

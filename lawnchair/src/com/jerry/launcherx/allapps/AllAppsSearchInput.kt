@@ -29,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.res.stringResource
 import androidx.core.view.ViewCompat
 import androidx.core.view.isGone
 import androidx.core.view.isInvisible
@@ -178,6 +179,13 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
                     queryEmpty = queryEmpty,
                     showMic = voiceIntent != null,
                     showLens = lensIntent != null,
+                    // The EditText clears its own hint when it loses focus, so show the hint
+                    // in the search bar shell while the drawer is idle.
+                    hint = if (!isFocused && queryEmpty) {
+                        stringResource(R.string.all_apps_search_bar_hint)
+                    } else {
+                        null
+                    },
                 )
 
                 val backgroundColor = if (supportBlur) {

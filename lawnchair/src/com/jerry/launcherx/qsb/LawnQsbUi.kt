@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -44,6 +45,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.jerry.launcherx.qsb.providers.Google
 import com.jerry.launcherx.qsb.providers.GoogleGo
@@ -111,12 +113,15 @@ data class QsbStyle(
  * @property contentDescription The accessibility label for the entire search bar container.
  * @property startIcon The state of the primary icon displayed at the beginning of the bar (usually the search provider logo).
  * @property endIcons A list of icons to be displayed at the end of the bar (e.g., Microphone, Lens, or Clear).
+ * @property hint Optional hint text shown after the leading icon. A wide, icon-only bar reads as
+ * an empty pill, so the dock search bar shows its purpose here.
  */
 @Immutable
 data class QsbState(
     val contentDescription: String,
     val startIcon: QsbIconState,
     val endIcons: List<QsbIconState>,
+    val hint: String? = null,
 )
 
 /**
@@ -187,13 +192,15 @@ fun rememberHotseatQsbState(
     val searchLabel = stringResource(R.string.label_search)
     val voiceSearchLabel = stringResource(R.string.label_voice_search)
     val lensLabel = stringResource(R.string.label_lens)
+    val searchHint = stringResource(R.string.all_apps_search_bar_hint)
 
-    return remember(searchProvider, themed, showMic, showLens, searchLabel, voiceSearchLabel, lensLabel) {
+    return remember(searchProvider, themed, showMic, showLens, searchLabel, voiceSearchLabel, lensLabel, searchHint) {
         val iconRes = if (themed) searchProvider.themedIcon else searchProvider.icon
         val isGoogleProvider = searchProvider == Google || searchProvider == GoogleGo || searchProvider == PixelSearch
 
         QsbState(
             contentDescription = searchLabel,
+            hint = searchHint,
             startIcon = QsbIconState(
                 id = QsbIconId.SEARCH,
                 resId = iconRes,
@@ -235,6 +242,7 @@ fun rememberHotseatQsbState(
  * @param queryEmpty Whether the search query is empty.
  * @param showMic Whether the voice search (microphone) icon should be visible.
  * @param showLens Whether the Google Lens icon should be visible.
+ * @param hint Optional hint text shown while the query is empty and the input is not focused.
  * @return A remembered [QsbState] containing the configuration for the All Apps QSB.
  */
 @Composable
@@ -245,19 +253,21 @@ fun rememberAllAppsQsbState(
     queryEmpty: Boolean,
     showMic: Boolean,
     showLens: Boolean,
+    hint: String? = null,
 ): QsbState {
     val searchLabel = stringResource(R.string.label_search)
     val voiceSearchLabel = stringResource(R.string.label_voice_search)
     val lensLabel = stringResource(R.string.label_lens)
     val clearLabel = stringResource(R.string.search_input_action_clear_results)
 
-    return remember(searchProvider, themed, shouldShowIcons, queryEmpty, showMic, showLens, searchLabel, voiceSearchLabel, lensLabel, clearLabel) {
+    return remember(searchProvider, themed, shouldShowIcons, queryEmpty, showMic, showLens, searchLabel, voiceSearchLabel, lensLabel, clearLabel, hint) {
         val iconRes = if (themed && shouldShowIcons) searchProvider.themedIcon else searchProvider.icon
         val resId = if (shouldShowIcons) iconRes else R.drawable.ic_qsb_search
         val isGoogleProvider = searchProvider == Google || searchProvider == GoogleGo || searchProvider == PixelSearch
 
         QsbState(
             contentDescription = searchLabel,
+            hint = hint,
             startIcon = QsbIconState(
                 id = QsbIconId.SEARCH,
                 resId = resId,
@@ -393,7 +403,21 @@ fun LawnQsbUi(
             )
         }
 
-        Spacer(Modifier.weight(1f))
+        val hint = state.hint
+        if (hint.isNullOrEmpty()) {
+            Spacer(Modifier.weight(1f))
+        } else {
+            Text(
+                text = hint,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 4.dp, end = 8.dp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyLarge,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
 
         val visibleIcons = state.endIcons.filter { it.visible }
         AnimatedContent(
