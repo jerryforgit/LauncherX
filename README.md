@@ -6,6 +6,8 @@ Android's [Launcher3](https://source.android.com/docs/core/architecture/modular-
 
 Repository: [github.com/jerryforgit/LauncherX](https://github.com/jerryforgit/LauncherX)
 
+Chinese name: **X 桌面**
+
 It keeps Lawnchair's Pixel-style foundation and adds a set of focused, experimental
 customizations: a liquid-glass dock, iPhone-style dock slots with sliding reordering, a
 large-folder swiper, a Launchpad widget, and more.
@@ -52,7 +54,8 @@ LauncherX-specific work on top of Lawnchair 16:
 - **Dock widgets**: 1×1 widgets can be placed in the dock when a slot is free.
 - **Dock tuning**: app spacing, inner padding, icon count (up to 20), dock rows, and pages.
 - **Android 8.x fallbacks**: the workspace caps icon size / fixes label padding on small cells, and the app drawer uses an opaque panel before Android 12 (where blur is unavailable).
-- **LauncherX icon**: new adaptive launcher icon and monochrome icon for themed icons.
+- **LauncherX icon**: new 3D X adaptive/monochrome launcher icon (light blue/white).
+- **Chinese name**: the app is shown as **X 桌面** in Simplified/Traditional Chinese.
 - **Polished details**: dimmed dock capsule behind folder popups, QSB-aware dock height,
   and high-resolution frosted backgrounds for popups.
 

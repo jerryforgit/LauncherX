@@ -6,6 +6,8 @@
 
 仓库：[github.com/jerryforgit/LauncherX](https://github.com/jerryforgit/LauncherX)
 
+中文名：**X 桌面**
+
 它保留 Lawnchair 的 Pixel 风格基础，并加入一些我自己维护的定制功能：液态玻璃 Dock、iPhone
 式 Dock 槽位和补位动画、大文件夹滑动分页、启动台小组件等。
 
@@ -48,7 +50,8 @@ LauncherX 使用独立的包名，可以和 Lawnchair 同时安装：
 - **Dock 调参**：应用间距、内边距、图标数量（最多 20）、Dock 行数、Dock 页数。
 - **Android 8.x 兼容**：小格子上会限制图标大小并修正标签间距；Android 12 以下没有模糊，
   应用抽屉改用不透明背景。
-- **LauncherX 图标**：新的自适应图标和单色图标。
+- **LauncherX 图标**：新的 3D X 自适应/单色图标（浅蓝白色）。
+- **中文名**：简体/繁体中文下显示为 **X 桌面**。
 - **细节修复**：文件夹弹窗时 Dock 胶囊变暗、QSB 关闭时的 Dock 高度、弹窗高清毛玻璃等。
 
 部分功能仍在开发中，详见[已知限制](#已知限制)。

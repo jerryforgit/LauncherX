@@ -12,7 +12,8 @@ Highlights in this build:
 - Large-folder swiper with horizontal/vertical paging and page dots.
 - Launchpad 1×1 widget and dock widget support.
 - Dock icon count up to 20, with app spacing and inner-padding controls.
-- New LauncherX adaptive/monochrome launcher icon.
+- New 3D X adaptive/monochrome launcher icon.
+- Chinese name **X 桌面** for zh-CN / zh-TW / zh-HK.
 - Android 8.x fixes: label padding/icon sizing on small cells, and an opaque app-drawer
   background before Android 12 (no blur available).
 - Remove LeakCanary from debug builds, so the separate “Leaks” launcher entry is gone.

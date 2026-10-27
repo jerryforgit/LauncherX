@@ -15,6 +15,7 @@
   ~ limitations under the License.
   -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="derived_app_name">X 桌面</string>
     <!-- TODO: Rename all strings to follow CONTRIBUTING.md guidelines -->
     <!--
 
