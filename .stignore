@@ -1,0 +1,15 @@
+# Syncthing: keep repository metadata and build artifacts out of the sync set.
+.git
+**/.git
+.gradle
+.kotlin
+build
+**/build
+out
+**/out
+local.properties
+keystore.properties
+*.apk
+*.aab
+*.jks
+*.keystore
