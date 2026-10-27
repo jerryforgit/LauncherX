@@ -993,6 +993,12 @@ public class DeviceProfile {
             // The dock contains no icons, so its reserved icon row is empty space. Drop it and
             // keep just the search bar, giving the free height back to the workspace.
             hotseatBarSizePx = Math.max(0, hotseatBarSizePx - hotseatCellHeightPx);
+        } else if (!isVerticalBarLayout()) {
+            // The bar must be able to contain its own icon row plus the configured bottom gap;
+            // otherwise the icons and the capsule background overflow the bar and get clipped at
+            // the screen edge, and the bottom-space preference no longer has room to move in.
+            hotseatBarSizePx = Math.max(
+                    hotseatBarSizePx, hotseatCellHeightPx + hotseatBarBottomSpacePx);
         }
     }
 

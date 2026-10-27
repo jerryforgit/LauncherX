@@ -1427,6 +1427,10 @@ public class Hotseat extends FrameLayout implements Insettable {
         post(() -> {
             mActivity.getDeviceProfile().refreshDockGeometry();
             mActivity.dispatchDeviceProfileChanged();
+            Launcher launcher = Launcher.getLauncher(getContext());
+            if (launcher != null && launcher.getWorkspace() != null) {
+                launcher.getWorkspace().onDockGeometryChanged();
+            }
         });
     }
 
