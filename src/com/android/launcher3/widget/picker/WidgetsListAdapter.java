@@ -493,14 +493,14 @@ public class WidgetsListAdapter extends Adapter<ViewHolder> implements OnHeaderC
 
         @Override
         public int compare(WidgetsListBaseEntry a, WidgetsListBaseEntry b) {
-            // Display Lawnchair at the top of the list
-            boolean leftIsLawnchair = a.mPkgItem.packageName.equals(BuildConfig.APPLICATION_ID);
-            boolean rightIsLawnchair = b.mPkgItem.packageName.equals(BuildConfig.APPLICATION_ID);
-            if (leftIsLawnchair || rightIsLawnchair) {
-                if (leftIsLawnchair && rightIsLawnchair) {
+            // Display LauncherX at the top of the list
+            boolean leftIsLauncherX = a.mPkgItem.packageName.equals(BuildConfig.APPLICATION_ID);
+            boolean rightIsLauncherX = b.mPkgItem.packageName.equals(BuildConfig.APPLICATION_ID);
+            if (leftIsLauncherX || rightIsLauncherX) {
+                if (leftIsLauncherX && rightIsLauncherX) {
                     return 0;
                 }
-                if (leftIsLawnchair) {
+                if (leftIsLauncherX) {
                     return -1;
                 }
                 return 1;

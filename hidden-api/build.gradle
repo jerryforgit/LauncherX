@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace 'app.lawnchair.hidden_api'
+    namespace 'com.jerry.launcherx.hidden_api'
     buildFeatures {
         aidl true
     }

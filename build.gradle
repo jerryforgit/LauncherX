@@ -151,7 +151,7 @@ android {
     namespace "com.android.launcher3"
     defaultConfig {
         /*
-         * Lawnchair Launcher 16.0 Beta 1.0
+         * LauncherX Launcher 16.0 Beta 1.0
          * see https://docs.lawnchair.app/developers/standards/development-workflow#versioning-scheme
          */
         versionCode 16_00_02_01_00
@@ -227,7 +227,7 @@ android {
 
         debug {
             applicationIdSuffix ".debug"
-            resValue("string", "derived_app_name", "Lawnchair (Debug)")
+            resValue("string", "derived_app_name", "LauncherX (Debug)")
 
             manifestPlaceholders.quickstepMinSdk = "0"
             manifestPlaceholders.quickstepMaxSdk = "100000"
@@ -236,7 +236,7 @@ android {
         }
 
         release {
-            resValue("string", "derived_app_name", "Lawnchair")
+            resValue("string", "derived_app_name", "LauncherX")
             minifyEnabled true
             shrinkResources true
             pseudoLocalesEnabled false
@@ -267,23 +267,23 @@ android {
         }
 
         github {
-            applicationId 'app.lawnchair'
+            applicationId 'com.jerry.launcherx'
             dimension "channel"
         }
 
         nightly {
-            applicationId 'app.lawnchair.nightly'
+            applicationId 'com.jerry.launcherx.nightly'
             dimension "channel"
         }
 
         play {
-            applicationId "app.lawnchair.play"
+            applicationId "com.jerry.launcherx.play"
             dimension "channel"
             isDefault true
         }
 
         configureEach {
-            resValue("string", "launcher_component", "${applicationId}/app.lawnchair.LawnchairLauncher")
+            resValue("string", "launcher_component", "${applicationId}/com.jerry.launcherx.LauncherXLauncher")
         }
     }
 
@@ -291,7 +291,7 @@ android {
         main {
             res.srcDirs = ['res']
 
-            // Lawnchair-TODO: Don't include Compose Disabled, but there's has to be another way of making this NOT long
+            // LauncherX-TODO: Don't include Compose Disabled, but there's has to be another way of making this NOT long
             java.srcDirs = ['src', 'src_plugins', 'compose/facade/core', 'compose/facade/enabled', 'compose/features']
             kotlin.directories.addAll('src', 'src_plugins', 'compose/facade/core', 'compose/facade/enabled', 'compose/features')
 
@@ -328,6 +328,11 @@ android {
             manifest.srcFile "quickstep/AndroidManifest-launcher.xml"
         }
 
+        test {
+            java.srcDirs = ['tests/unit']
+            kotlin.directories.addAll('tests/unit')
+        }
+
         lawnWithQuickstepNightly {
             manifest.srcFile "quickstep/AndroidManifest-launcher.xml"
         }
@@ -349,10 +354,10 @@ androidComponents {
     onVariants(selector().all()) { variant ->
         def channel = variant.productFlavors.last().second
         variant.outputs.forEach { output ->
-            output.outputFileName.set("Lawnchair.${output.versionName.get()}.$channel.${variant.buildType}.apk")
+            output.outputFileName.set("LauncherX.${output.versionName.get()}.$channel.${variant.buildType}.apk")
         }
 
-        // Lawnchair-TODO: A better way to sync proto file to the IDE preventing missing or outdated result. Please remove if this is the best solution we have right now
+        // LauncherX-TODO: A better way to sync proto file to the IDE preventing missing or outdated result. Please remove if this is the best solution we have right now
         def capitalizedVariantName = variant.name.substring(0, 1).toUpperCase(java.util.Locale.ROOT) + variant.name.substring(1)
         def generatedProtoJavaDir = layout.buildDirectory
             .dir("generated/java/generate${capitalizedVariantName}Proto/java")
@@ -378,6 +383,8 @@ composeCompiler {
 addFrameworkJar('framework-16.jar')
 
 dependencies {
+    testImplementation libs.junit
+
     implementation projects.iconloaderlib
     implementation projects.searchuilib
     implementation projects.animationlib
@@ -495,9 +502,6 @@ dependencies {
     implementation libs.google.guava
 
     implementation libs.androidx.exifinterface
-
-    debugImplementation libs.leakcanary.android
-    debugImplementation libs.leakcanary.androidstudio
 }
 
 ksp {

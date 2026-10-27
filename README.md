@@ -1,112 +1,168 @@
-# Lawnchair 16
+# LauncherX
 
-[![Build debug APK](https://github.com/LawnchairLauncher/lawnchair/actions/workflows/ci.yml/badge.svg)](https://github.com/LawnchairLauncher/lawnchair/actions/workflows/ci.yml)
-[![Build release APK](https://github.com/LawnchairLauncher/lawnchair/actions/workflows/release_update.yml/badge.svg)](https://github.com/LawnchairLauncher/lawnchair/actions/workflows/release_update.yml)
-[![Crowdin](https://badges.crowdin.net/e/188ba69d884418987f0b7f1dd55e3a4e/localized.svg)](https://lawnchair.crowdin.com/lawnchair)
-[![OpenCollective](https://img.shields.io/opencollective/all/lawnchair?label=financial%20contributors&logo=open-collective)](https://opencollective.com/lawnchair)
-[![Telegram](https://img.shields.io/endpoint?url=https%3A%2F%2Ftg.sumanjay.workers.dev%2Flccommunity)](https://t.me/lccommunity)
-[![Discord](https://img.shields.io/discord/803299970169700402?label=server&logo=discord)](https://discord.gg/3x8qNWxgGZ)
-[![GitHub Downloads](https://img.shields.io/github/downloads/LawnchairLauncher/lawnchair/total.svg?label=GitHub%20Downloads&logo=github)](https://github.com/LawnchairLauncher/lawnchair/releases)
-[![Play Store Installs](https://img.shields.io/endpoint?color=green&logo=googleplay&logoColor=green&url=https%3A%2F%2Fplay.cuzi.workers.dev%2Fplay%3Fi%3Dapp.lawnchair.play%26l%3DPlay%2520Store%2520Installs%26m%3D%24shortinstalls)](https://play.google.com/store/apps/details?id=app.lawnchair.play)
+**LauncherX** is an unofficial, open-source home screen for Android, forked from
+[Lawnchair 16](https://github.com/LawnchairLauncher/lawnchair), which itself is based on
+Android's [Launcher3](https://source.android.com/docs/core/architecture/modular-system/launcher3).
 
-<picture>
-    <!-- Avoid image being clickable with slight workaround -->
-    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/device-frame-dark.webp" width="250px">
-    <img alt="Smartphone home screen shown in day and night themes, featuring Android Material You dynamic color styling across the wallpaper, clock widget, and app icons." src="docs/assets/device-frame-light.webp" width="250px">
-</picture>
+It keeps Lawnchair's Pixel-style foundation and adds a set of focused, experimental
+customizations: a liquid-glass dock, iPhone-style dock slots with sliding reordering, a
+large-folder swiper, a Launchpad widget, and more.
 
-Lawnchair is a free, open-source home app for Android. Taking Launcher3—Android’s default home app—as a starting point, it ports Pixel Launcher features and introduces rich customization options.
+> **Unofficial fork.** LauncherX is not affiliated with, endorsed by, or supported by the
+> Lawnchair project or Google. Please report LauncherX-specific issues here, not upstream.
 
-This branch houses the codebase of Lawnchair 16, which is currently in development and is based on Launcher3 from Android 16. For Lawnchair 9 to 15, see the branches with the `9-` to `15-` prefixes, respectively.
+[中文说明](README.zh-CN.md)
+
+---
+
+## Status
+
+- Base: Lawnchair 16 / Launcher3 from Android 16
+- Current version: `16.Dev.(<commit>)`
+- Development build: expect rough edges and breaking changes
+- Target SDK: 37 · Min SDK: 26 (Android 8.0+)
+- Tested on Android 8.1 (API 27, Xiaomi Mi 5X) and Android 14/15/16 tablets
+
+LauncherX installs as a separate app from Lawnchair, so both can coexist:
+
+| Build | Application ID |
+| --- | --- |
+| GitHub release | `com.jerry.launcherx` |
+| Debug | `com.jerry.launcherx.debug` |
+| Nightly flavor | `com.jerry.launcherx.nightly` |
+| Play flavor | `com.jerry.launcherx.play` |
 
 ## Features
 
-- Material 3 Expressive theming that follows your wallpaper and system colors.
-- At a Glance widget support, with integration for [Smartspacer](https://github.com/KieronQuinn/Smartspacer).
-- QuickSwitch support for Android Recents integration on Android 15-16 (root required).
-- Global search for apps, contacts, and web results from the home screen.
-- Customization options for icon packs, fonts, and color settings.
+LauncherX-specific work on top of Lawnchair 16:
 
-## Download
+- **Liquid-glass dock**: a translucent capsule that adapts to light/dark themes and to the
+  wallpaper, with separate blur-quality settings.
+- **Dock width modes**: `Auto` (full width on phones, content width on tablets), `Full`
+  (capsule spans the dock bar), and `Content` (capsule wraps the icons).
+- **iPhone-style dock slots**: removing an icon compacts the remaining icons to the start of
+  the row, with a 220 ms `translationX/Y` slide animation.
+- **Drag-in placeholder**: dragging an app over the dock opens a gap at the nearest slot;
+  dropping inserts it and shifts the following icons.
+- **Large-folder swiper**: horizontal or vertical pages, wrap-around, page dots, and
+  per-folder menu overrides.
+- **Launchpad widget**: a 1×1 bitmap tile that follows the current icon shape and icon size.
+- **Dock widgets**: 1×1 widgets can be placed in the dock when a slot is free.
+- **Dock tuning**: app spacing, inner padding, icon count (up to 20), dock rows, and pages.
+- **Android 8.x fallbacks**: the workspace caps icon size / fixes label padding on small cells, and the app drawer uses an opaque panel before Android 12 (where blur is unavailable).
+- **LauncherX icon**: new adaptive launcher icon and monochrome icon for themed icons.
+- **Polished details**: dimmed dock capsule behind folder popups, QSB-aware dock height,
+  and high-resolution frosted backgrounds for popups.
 
-<p align="left">
-  <a href="https://play.google.com/store/apps/details?id=app.lawnchair.play">
-    <picture>
-      <!-- Avoid image being clickable with slight workaround -->
-      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/badge-google-play.webp" height="60">
-      <img alt="Get it on Google Play" src="docs/assets/badge-google-play.webp" height="60">
-    </picture>
-  </a>
-  <a href="https://apt.izzysoft.de/fdroid/index/apk/app.lawnchair">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/badge-izzyondroid.webp" height="60">
-      <img alt="Get it on IzzyOnDroid" src="docs/assets/badge-izzyondroid.webp" height="60">
-    </picture>
-  </a>
-  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/LawnchairLauncher/lawnchair/">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/badge-obtainium.webp" height="60">
-      <img alt="Get it on Obtainium" src="docs/assets/badge-obtainium.webp" height="60">
-    </picture>
-  </a>
-    <a href="https://github.com/LawnchairLauncher/lawnchair/releases">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/badge-github.webp" height="60">
-      <img alt="Get it on GitHub" src="docs/assets/badge-github.webp" height="60">
-    </picture>
-  </a>
-</p>
+Some features are still work in progress. See [Known limitations](#known-limitations).
 
-Lawnchair on Play Store will install as a different app compared to other sources. Features may be restricted to comply with Google Play’s publishing rules.
+## Build
 
-You can also [verify your installation](https://docs.lawnchair.app/getting-started/install-and-setup/verify) to check if you have installed an official build.
+### Requirements
 
-### Development builds
+- Linux, macOS, or Windows with WSL2
+- JDK 21
+- Android SDK with **API 37** and build-tools **37.0.0**
+- Git
 
-Interested in keeping yourself up-to-date with every Lawnchair development? Try our development builds!
+### From the command line
 
-These builds offer the latest features and bug fixes at a cost of performance and additional issues. Make backups before installing.
+```bash
+git clone --recurse-submodules <your-repo-url> LauncherX
+cd LauncherX
 
-Download: [Obtainium][Obtainium link] • [GitHub][GitHub link] • [nightly.link][Nightly link]
+# Point Gradle at your Android SDK (or open the project in Android Studio)
+echo "sdk.dir=$HOME/Android/Sdk" > local.properties
 
-## Sponsors
+./gradlew assembleLawnWithQuickstepGithubDebug
+```
 
-<p align="left">
-  <a href="https://coderabbit.link/lawnchair">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/sponsor-coderabbit-dark.svg" width="300">
-      <img alt="CodeRabbit" src="docs/assets/sponsor-coderabbit-light.svg" width="300">
-    </picture>
-  </a>
-</p>
+The debug APK is written to:
 
-[CodeRabbit](https://coderabbit.link/lawnchair) is an AI-powered code review platform that integrates directly into pull-request workflows and IDEs, examining code changes in context and suggesting improvements.
+```text
+build/outputs/apk/lawnWithQuickstepGithub/debug/
+```
 
-## Support Lawnchair
+Install it with:
 
-If you love what we do, consider [supporting us on Open Collective](https://opencollective.com/lawnchair)! Your contributions help keep Lawnchair independent and enable us to develop faster.
+```bash
+adb install -r build/outputs/apk/lawnWithQuickstepGithub/debug/*.apk
+```
 
-A huge thank you to our Core Backers ($5+):
-*(These backers directly fund our Project Velocity Fund)*
+For a release build:
 
-[![Core Backers](https://opencollective.com/lawnchair/tiers/backer.svg?avatarHeight=64&width=890&button=false)](https://opencollective.com/lawnchair)
+```bash
+./gradlew assembleLawnWithQuickstepGithubRelease
+```
 
-[Become a supporter](https://opencollective.com/lawnchair) to help us cover our operational costs, or become a Core Backer to be featured here!
+Release signing is read from `keystore.properties` at the repository root (ignored by Git).
+If the file is absent, the debug signing key is used.
 
-## Contribute
+### Android Studio
 
-Visit the [Lawnchair contributing guidelines](CONTRIBUTING.md) for information and tips on contributing to Lawnchair.
+Open the repository root as a Gradle project, let the SDK sync, and select the
+`lawnWithQuickstepGithub` / `debug` variant.
 
-## Quick links
+## Repository layout
 
-- [Website](https://lawnchair.app)
-- [Documentation](https://docs.lawnchair.app/)
-- [News on Telegram](https://t.me/lawnchairci)
-- [Discord](https://discord.com/invite/3x8qNWxgGZ)
-- [X (formerly Twitter)](https://x.com/lawnchairapp)
-- [_XDA_ thread](https://xdaforums.com/t/lawnchair-customizable-pixel-launcher.3627137/)
+This is a Launcher3/Lawnchair-derived monorepo. Most LauncherX code lives in:
 
-<!-- Download links -->
-[Nightly link]: https://nightly.link/LawnchairLauncher/lawnchair/workflows/ci/16-dev
-[Obtainium link]: https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22app.lawnchair.nightly%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Flawnchairlauncher%2Flawnchair%22%2C%22author%22%3A%22Lawnchair%20Launcher%22%2C%22name%22%3A%22Lawnchair%20(Debug)%22%2C%22preferredApkIndex%22%3A0%2C%22additionalSettings%22%3A%22%7B%5C%22includePrereleases%5C%22%3Atrue%2C%5C%22fallbackToOlderReleases%5C%22%3Afalse%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22Lawnchair%20Nightly%5C%22%2C%5C%22filterReleaseNotesByRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22verifyLatestTag%5C%22%3Afalse%2C%5C%22dontSortReleasesList%5C%22%3Afalse%2C%5C%22useLatestAssetDateAsReleaseDate%5C%22%3Afalse%2C%5C%22trackOnly%5C%22%3Afalse%2C%5C%22versionExtractionRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22matchGroupToUse%5C%22%3A%5C%22%5C%22%2C%5C%22versionDetection%5C%22%3Afalse%2C%5C%22releaseDateAsVersion%5C%22%3Atrue%2C%5C%22useVersionCodeAsOSVersion%5C%22%3Afalse%2C%5C%22apkFilterRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22invertAPKFilter%5C%22%3Afalse%2C%5C%22autoApkFilterByArch%5C%22%3Atrue%2C%5C%22appName%5C%22%3A%5C%22%5C%22%2C%5C%22shizukuPretendToBeGooglePlay%5C%22%3Afalse%2C%5C%22exemptFromBackgroundUpdates%5C%22%3Afalse%2C%5C%22skipUpdateNotifications%5C%22%3Afalse%2C%5C%22about%5C%22%3A%5C%22Lawnchair%20is%20a%20free%2C%20open-source%20home%20app%20for%20Android.%20(NOTE%3A%20This%20is%20the%20debug%20version%20of%20Lawnchair%2C%20for%20the%20beta%2Fstable%20versions%20see%20%5C%5C%5C%22Lawnchair%5C%5C%5C%22)%5C%22%7D%22%7D
-[GitHub link]: https://github.com/LawnchairLauncher/lawnchair/releases/tag/nightly
+- `lawnchair/src/com/jerry/launcherx/` — Lawnchair/LauncherX-specific Kotlin and Java code
+- `lawnchair/res/` — LauncherX resources and preferences
+- `src/` — Launcher3 sources
+- `quickstep/` — Quickstep / recents integration
+- `platform_frameworks_libs_systemui/` — Git submodule shared with Lawnchair
+
+The app-level Java/Kotlin package is now `com.jerry.launcherx`. Three names are intentionally
+kept for compatibility:
+
+- `app.lawnchair.icons` — icon drawables/shared icon helpers also used by the
+  `platform_frameworks_libs_systemui` submodule
+- `com.android.launcher3` — the AOSP namespace used by `R`, `BuildConfig`, AIDL and resources
+- `app.lawnchair.lawnfeed` — an optional external feed app, not part of LauncherX
+
+The Android application ID and the user-visible name are LauncherX. See
+[PACKAGE_RENAME.md](PACKAGE_RENAME.md) for the completed rename and the remaining exceptions.
+
+## Known limitations
+
+- The fork is under active development; not every upstream feature is tested on every device.
+- A few internal namespaces still use upstream names (`app.lawnchair.icons`,
+  `com.android.launcher3`); the installed app ID is `com.jerry.launcherx`.
+- Some user-visible strings in third-party translations still say “Lawnchair” until the
+  translations are refreshed.
+- The dock supports up to 20 slots. A single row with 30 slots would overlap at the default
+  icon size; high-density docks need smaller icons or automatic paging.
+- Some upstream online services (About links, nightly update checks, live information) still
+  point at Lawnchair infrastructure. These will be replaced with LauncherX endpoints.
+- Gesture-navigation recents on some OEM ROMs (e.g. ZUI) is a platform limitation.
+
+## Contributing
+
+Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) first.
+
+- Use GitHub Issues for bug reports and feature requests.
+- Keep pull requests focused and include a test plan.
+- Do not commit signing keys, `keystore.properties`, `local.properties`, or build outputs.
+- Run `./gradlew spotlessCheck` before opening a pull request.
+
+## License and attribution
+
+LauncherX is distributed under the **Apache License 2.0**, unless a file states otherwise.
+See [LICENSE.txt](LICENSE.txt) and [NOTICE](NOTICE).
+
+This project contains code and resources from:
+
+- [Android Launcher3](https://source.android.com/docs/core/architecture/modular-system/launcher3) —
+  Apache License 2.0
+- [Lawnchair](https://github.com/LawnchairLauncher/lawnchair) — Apache License 2.0, with
+  some files carrying their own GPL-3.0 headers (for example the Flowerpot parser)
+- [platform_frameworks_libs_systemui](https://github.com/LawnchairLauncher/platform_frameworks_libs_systemui)
+
+Upstream copyright notices and license headers are retained. If you redistribute LauncherX,
+keep the NOTICE and license files, and comply with the license of every file you use.
+
+## Credits
+
+Thanks to the Lawnchair maintainers and contributors, the AOSP Launcher3 team, and everyone
+who has reported bugs or contributed translations and code upstream.

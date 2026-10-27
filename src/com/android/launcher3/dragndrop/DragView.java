@@ -406,6 +406,7 @@ public abstract class DragView<T extends Context & ActivityContext> extends Fram
      */
     public void show(int touchX, int touchY) {
         mDragLayer.addView(this);
+        raiseDragViewToTop();
 
         // Start the pick-up animation
         BaseDragLayer.LayoutParams lp = new BaseDragLayer.LayoutParams(mWidth, mHeight);
@@ -427,6 +428,25 @@ public abstract class DragView<T extends Context & ActivityContext> extends Fram
         move(touchX, touchY);
         // Post the animation to skip other expensive work happening on the first frame
         post(mScaleAnim::start);
+    }
+
+    /**
+     * LauncherX: keeps the drag view above every sibling.
+     *
+     * <p>{@link android.view.ViewGroup} sorts children by Z as soon as any child has a non-zero Z
+     * (e.g. the hotseat capsule casts a shadow via elevation), which makes it ignore
+     * {@link DragLayer#getChildDrawingOrder}. Giving the drag view a Z above all current siblings
+     * ensures the dragged icon is not painted behind an elevated dock.
+     */
+    private void raiseDragViewToTop() {
+        float maxZ = 0f;
+        for (int i = 0; i < mDragLayer.getChildCount(); i++) {
+            View child = mDragLayer.getChildAt(i);
+            if (child != this) {
+                maxZ = Math.max(maxZ, child.getZ());
+            }
+        }
+        setTranslationZ(maxZ + 1f);
     }
 
     public void cancelAnimation() {

@@ -14,7 +14,7 @@
   ~ limitations under the License.
   -->
 
-<app.lawnchair.allapps.AllAppsSearchInput xmlns:android="http://schemas.android.com/apk/res/android"
+<com.jerry.launcherx.allapps.AllAppsSearchInput xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/search_container_all_apps"
     android:layout_width="match_parent"
     android:layout_height="@dimen/search_box_container_height"
@@ -55,7 +55,7 @@
             android:textColor="?android:textColorTertiary"
             android:textSize="20sp" />
 
-        <app.lawnchair.allapps.FallbackSearchInputView
+        <com.jerry.launcherx.allapps.FallbackSearchInputView
             android:id="@+id/input"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -77,4 +77,4 @@
 
     </FrameLayout>
 
-</app.lawnchair.allapps.AllAppsSearchInput>
+</com.jerry.launcherx.allapps.AllAppsSearchInput>

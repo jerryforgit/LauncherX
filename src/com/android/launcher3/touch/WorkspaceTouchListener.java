@@ -20,10 +20,11 @@ package com.android.launcher3.touch;
 import static android.view.MotionEvent.ACTION_CANCEL;
 import static android.view.MotionEvent.ACTION_DOWN;
 import static android.view.MotionEvent.ACTION_MOVE;
-import static android.view.MotionEvent.ACTION_POINTER_UP;
+import static android.view.MotionEvent.ACTION_POINTER_DOWN;
 import static android.view.MotionEvent.ACTION_UP;
 
 import static com.android.launcher3.LauncherState.ALL_APPS;
+import static com.android.launcher3.LauncherState.EDIT_MODE;
 import static com.android.launcher3.LauncherState.NORMAL;
 import static com.android.launcher3.Utilities.shouldEnableMouseInteractionChanges;
 import static com.android.launcher3.logging.StatsLogManager.LauncherEvent.LAUNCHER_ALLAPPS_CLOSE_TAP_OUTSIDE;
@@ -54,7 +55,7 @@ import com.android.launcher3.testing.TestLogging;
 import com.android.launcher3.testing.shared.TestProtocol;
 import com.android.launcher3.util.TouchUtil;
 
-import app.lawnchair.LawnchairLauncher;
+import com.jerry.launcherx.LauncherXLauncher;
 
 /**
  * Helper class to handle touch on empty space in workspace and show options popup on long press
@@ -83,6 +84,9 @@ public class WorkspaceTouchListener extends GestureDetector.SimpleOnGestureListe
 
     private final GestureDetector mGestureDetector;
     private boolean mDoubleTapPending = false;
+    // LauncherX: true once a second finger touches down during the current gesture, so that a
+    // multi-touch gesture (e.g. the pinch-in that enters edit mode) is never treated as a tap.
+    private boolean mHadMultiplePointers = false;
 
     DevicePolicyManager mDpm;
 
@@ -101,6 +105,9 @@ public class WorkspaceTouchListener extends GestureDetector.SimpleOnGestureListe
         int action = ev.getActionMasked();
         if (action == ACTION_DOWN) {
             mDoubleTapPending = false;
+            mHadMultiplePointers = false;
+        } else if (action == ACTION_POINTER_DOWN) {
+            mHadMultiplePointers = true;
         }
 
         mGestureDetector.onTouchEvent(ev);
@@ -133,7 +140,7 @@ public class WorkspaceTouchListener extends GestureDetector.SimpleOnGestureListe
                 mTouchDownPoint.set(ev.getX(), ev.getY());
                 // Mouse right button's ACTION_DOWN should immediately show menu
                 if (TouchUtil.isMouseRightClickDownOrMove(ev)) {
-                    maybeShowMenu();
+                    maybeShowMenu(false);
                     return true;
                 }
 
@@ -184,12 +191,26 @@ public class WorkspaceTouchListener extends GestureDetector.SimpleOnGestureListe
             result = isInAllAppsBottomSheet && action != ACTION_CANCEL && action != ACTION_UP;
         }
 
-        if (action == ACTION_UP || action == ACTION_POINTER_UP) {
-            if (!mWorkspace.isHandlingTouch()) {
-                final CellLayout currentPage =
-                        (CellLayout) mWorkspace.getChildAt(mWorkspace.getCurrentPage());
-                if (currentPage != null) {
-                    mWorkspace.onWallpaperTap(ev);
+        if (action == ACTION_UP) {
+            // Only a genuine single-finger tap leaves the edit state / taps the wallpaper. A
+            // multi-touch gesture (pinch to enter edit mode) must not be treated as a tap, or it
+            // would immediately bounce back out of EDIT_MODE when the fingers lift.
+            if (!mHadMultiplePointers
+                    && !mWorkspace.isHandlingTouch() && mLongPressState == STATE_CANCELLED) {
+                if (mLauncher.isInState(EDIT_MODE)) {
+                    // Tapping empty space first clears an active multi-selection, and only leaves
+                    // the home-screen edit state once nothing is selected.
+                    if (mLauncher.getEditModeSelection().isActive()) {
+                        mLauncher.getEditModeSelection().clear();
+                    } else {
+                        mLauncher.getStateManager().goToState(NORMAL);
+                    }
+                } else {
+                    final CellLayout currentPage =
+                            (CellLayout) mWorkspace.getChildAt(mWorkspace.getCurrentPage());
+                    if (currentPage != null) {
+                        mWorkspace.onWallpaperTap(ev);
+                    }
                 }
             }
         }
@@ -198,7 +219,7 @@ public class WorkspaceTouchListener extends GestureDetector.SimpleOnGestureListe
             cancelLongPress();
         }
         if (action == ACTION_UP && isInAllAppsBottomSheet) {
-            // NORMAL has no FLAG_CLOSE_POPUPS, so drawer folders (Lawnchair) would stay open
+            // NORMAL has no FLAG_CLOSE_POPUPS, so drawer folders (LauncherX) would stay open
             // on the workspace after dismissing All Apps via the sheet's upper edge.
             AbstractFloatingView.closeOpenViews(
                     mLauncher, true /* animate */, AbstractFloatingView.TYPE_FOLDER);
@@ -234,10 +255,10 @@ public class WorkspaceTouchListener extends GestureDetector.SimpleOnGestureListe
             // Stop mouse long press events from showing the menu.
             return;
         }
-        maybeShowMenu();
+        maybeShowMenu(true);
     }
 
-    private void maybeShowMenu() {
+    private void maybeShowMenu(boolean isLongPress) {
         if (mLongPressState == STATE_REQUESTED) {
             TestLogging.recordEvent(TestProtocol.SEQUENCE_MAIN, "Workspace.longPress");
             if (canHandleLongPress()) {
@@ -247,7 +268,12 @@ public class WorkspaceTouchListener extends GestureDetector.SimpleOnGestureListe
                 mWorkspace.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS,
                         HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING);
                 mLauncher.getStatsLogManager().logger().log(LAUNCHER_WORKSPACE_LONGPRESS);
-                mLauncher.showDefaultOptions(mTouchDownPoint.x, mTouchDownPoint.y);
+                if (isLongPress) {
+                    mLauncher.onWorkspaceEmptySpaceLongPress(
+                            mTouchDownPoint.x, mTouchDownPoint.y);
+                } else {
+                    mLauncher.showDefaultOptions(mTouchDownPoint.x, mTouchDownPoint.y);
+                }
                 if (mLauncher.isSplitSelectionActive()) {
                     mLauncher.dismissSplitSelection(LAUNCHER_SPLIT_SELECTION_EXIT_INTERRUPTED);
                 }
@@ -261,7 +287,7 @@ public class WorkspaceTouchListener extends GestureDetector.SimpleOnGestureListe
     public boolean onDoubleTap(MotionEvent event) {
         mDoubleTapPending = true;
         Context context = mWorkspace.getContext();
-        LawnchairLauncher launcher = Launcher.fromContext(context);
+        LauncherXLauncher launcher = Launcher.fromContext(context);
         launcher.getGestureController().onDoubleTap();
         return true;
     }

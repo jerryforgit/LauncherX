@@ -81,6 +81,7 @@ import com.android.launcher3.ExtendedEditText;
 import com.android.launcher3.Flags;
 import com.android.launcher3.Insettable;
 import com.android.launcher3.InsettableFrameLayout;
+import com.android.launcher3.Launcher;
 import com.android.launcher3.R;
 import com.android.launcher3.Utilities;
 import com.android.launcher3.allapps.BaseAllAppsAdapter.AdapterItem;
@@ -113,15 +114,15 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import app.lawnchair.preferences2.PreferenceCacheExtensionsKt;
+import com.jerry.launcherx.preferences2.PreferenceCacheExtensionsKt;
 import static com.topjohnwu.superuser.internal.Utils.context;
-import app.lawnchair.allapps.LawnchairAlphabeticalAppsList;
-import app.lawnchair.font.FontManager;
-import app.lawnchair.preferences.PreferenceManager;
-import app.lawnchair.preferences2.PreferenceManager2;
-import app.lawnchair.theme.color.tokens.ColorTokens;
-import app.lawnchair.util.LawnchairUtilsKt;
-import app.lawnchair.ui.StretchRecyclerViewContainer;
+import com.jerry.launcherx.allapps.LauncherXAlphabeticalAppsList;
+import com.jerry.launcherx.font.FontManager;
+import com.jerry.launcherx.preferences.PreferenceManager;
+import com.jerry.launcherx.preferences2.PreferenceManager2;
+import com.jerry.launcherx.theme.color.tokens.ColorTokens;
+import com.jerry.launcherx.util.LauncherXUtilsKt;
+import com.jerry.launcherx.ui.StretchRecyclerViewContainer;
 
 /**
  * All apps container view with search support for use in a dragging activity.
@@ -154,7 +155,7 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
         }
         UserIconInfo userIconInfo = UserCache.getInstance(getContext()).getUserInfo(info.user);
         return userIconInfo.isCloned();
-    }; // Lawnchair: Show app from clone profile
+    }; // LauncherX: Show app from clone profile
     protected WorkProfileManager mWorkManager;
     protected final PrivateProfileManager mPrivateProfileManager;
     protected final Point mFastScrollerOffset = new Point();
@@ -299,14 +300,14 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
         mMainAdapterProvider = mSearchUiDelegate.createMainAdapterProvider();
 
         mAH.set(AdapterHolder.MAIN, new AdapterHolder(AdapterHolder.MAIN,
-                new LawnchairAlphabeticalAppsList<>(mActivityContext,
+                new LauncherXAlphabeticalAppsList<>(mActivityContext,
                         mAllAppsStore,
                         null,
                         mPrivateProfileManager)));
         mAH.set(AdapterHolder.WORK, new AdapterHolder(AdapterHolder.WORK,
-                new LawnchairAlphabeticalAppsList<>(mActivityContext, mAllAppsStore, mWorkManager, null)));
+                new LauncherXAlphabeticalAppsList<>(mActivityContext, mAllAppsStore, mWorkManager, null)));
         mAH.set(SEARCH, new AdapterHolder(SEARCH,
-                new LawnchairAlphabeticalAppsList<>(mActivityContext, mAllAppsStore, null, null)));
+                new LauncherXAlphabeticalAppsList<>(mActivityContext, mAllAppsStore, null, null)));
 
         getLayoutInflater().inflate(R.layout.all_apps_content, this);
         mHeader = findViewById(R.id.all_apps_header);
@@ -981,7 +982,7 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
         } else {
             defaultColor = mBottomSheetBackgroundColorOverBlur;
         }
-        int newColor = LawnchairUtilsKt.getAllAppsBackgroundColor(mActivityContext, defaultColor);
+        int newColor = LauncherXUtilsKt.getAllAppsBackgroundColor(mActivityContext, defaultColor);
         if (mCachedBottomSheetBgColor != newColor) {
             mCachedBottomSheetBgColor = newColor;
             return true;
@@ -1447,13 +1448,41 @@ public class ActivityAllAppsContainerView<T extends Context & ActivityContext>
     }
 
     private void applyAdapterSideAndBottomPaddings(DeviceProfile grid) {
-        int bottomPadding = Math.max(mInsets.bottom, mNavBarScrimHeight);
+        final int bottomPadding = Math.max(mInsets.bottom, mNavBarScrimHeight);
         mAH.forEach(adapterHolder -> {
             adapterHolder.mPadding.bottom = bottomPadding;
             adapterHolder.mPadding.left = grid.allAppsPadding.left;
             adapterHolder.mPadding.right = grid.allAppsPadding.right;
             adapterHolder.applyPadding();
         });
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        super.onLayout(changed, l, t, r, b);
+        updateSheetZOrder();
+    }
+
+    /**
+     * Keeps the all-apps sheet above the floating dock.
+     *
+     * The dock draws its capsule shadow by setting an elevation, and ViewGroup orders children by Z
+     * once any of them is elevated — which used to lift the capsule over the drawer and wash out the
+     * last row of icons. Matching the stock launcher (drawer over hotseat) means the drawer has to
+     * sit just above the dock's Z.
+     */
+    private void updateSheetZOrder() {
+        float dockZ = 0f;
+        if (mActivityContext instanceof Launcher launcher) {
+            View dock = launcher.getHotseat();
+            if (dock != null && dock.getParent() == getParent()) {
+                dockZ = dock.getZ();
+            }
+        }
+        float targetZ = dockZ + 1f;
+        if (getTranslationZ() != targetZ) {
+            setTranslationZ(targetZ);
+        }
     }
 
     private void setDeviceManagementResources() {

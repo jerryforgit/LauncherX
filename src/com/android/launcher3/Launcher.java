@@ -187,6 +187,7 @@ import com.android.launcher3.debug.TestEventEmitter;
 import com.android.launcher3.debug.TestEventEmitter.TestEvent;
 import com.android.launcher3.dot.DotInfo;
 import com.android.launcher3.dragndrop.DragLayer;
+import com.android.launcher3.celllayout.CellLayoutLayoutParams;
 import com.android.launcher3.dragndrop.DragView;
 import com.android.launcher3.dragndrop.LauncherDragController;
 import com.android.launcher3.folder.Folder;
@@ -255,7 +256,8 @@ import com.android.launcher3.util.WallpaperThemeManager;
 import com.android.launcher3.views.FloatingIconView;
 import com.android.launcher3.views.FloatingSurfaceView;
 import com.android.launcher3.views.OptionsPopupView;
-import app.lawnchair.views.EditModePageStrip;
+import com.jerry.launcherx.views.EditModeActionBar;
+import com.jerry.launcherx.views.EditModePageStrip;
 import com.android.launcher3.views.ScrimView;
 import com.android.launcher3.widget.LauncherAppWidgetHostView;
 import com.android.launcher3.widget.LauncherAppWidgetProviderInfo;
@@ -291,7 +293,11 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import app.lawnchair.LawnchairApp;
+import com.jerry.launcherx.LauncherXApp;
+import com.jerry.launcherx.hotseat.RecentAppsManager;
+import com.jerry.launcherx.modern.folder.LargeFolderBinder;
+import com.jerry.launcherx.preferences2.PreferenceCacheExtensionsKt;
+import com.jerry.launcherx.preferences2.PreferenceManager2;
 
 /**
  * Default launcher application.
@@ -369,6 +375,11 @@ public class Launcher extends StatefulActivity<LauncherState>
     // UI and state for the overview panel
     private View mOverviewPanel;
     private EditModePageStrip mEditModePageStrip;
+    private EditModeActionBar mEditModeActionBar;
+    // LauncherX: edit-mode multi-selection state and its action bar.
+    private final com.jerry.launcherx.views.EditModeSelection mEditModeSelection =
+            new com.jerry.launcherx.views.EditModeSelection();
+    private com.jerry.launcherx.views.EditModeSelectionBar mEditModeSelectionBar;
 
     // Used to notify when an activity launch has been deferred because launcher is not yet resumed
     // TODO: See if we can remove this later
@@ -408,6 +419,14 @@ public class Launcher extends StatefulActivity<LauncherState>
 
     protected long mLastTouchUpTime = -1;
     private boolean mTouchInProgress;
+    /** True when another activity stopped the launcher since the last onResume. */
+    private boolean mStoppedSinceResume;
+
+    private static final int INVALID_POINTER = -1;
+    /** Second pointer used to flip pages while an item is being dragged. */
+    private int mSecondaryDragPointerId = INVALID_POINTER;
+    private float mSecondaryDragPointerX;
+    private boolean mSecondaryDragPageFlipped;
 
     // New InstanceId is assigned to mAllAppsSessionLogId for each AllApps sessions.
     // When Launcher is not in AllApps state mAllAppsSessionLogId will be null.
@@ -1009,6 +1028,7 @@ public class Launcher extends StatefulActivity<LauncherState>
 
     @Override
     protected void onStop() {
+        mStoppedSinceResume = true;
         super.onStop();
         if (mDeferOverlayCallbacks) {
             checkIfOverlayStillDeferred();
@@ -1233,6 +1253,7 @@ public class Launcher extends StatefulActivity<LauncherState>
     protected void onResume() {
         TraceHelper.INSTANCE.beginSection(ON_RESUME_EVT);
         super.onResume();
+        mStoppedSinceResume = false;
 
         if (mDeferOverlayCallbacks) {
             scheduleDeferredCheck();
@@ -1241,6 +1262,10 @@ public class Launcher extends StatefulActivity<LauncherState>
         }
 
         DragView.removeAllViews(this);
+
+        // Update the recent-apps dock strip whenever we return to the desktop.
+        RecentAppsManager.getInstance(this).refreshNow();
+
         TraceHelper.INSTANCE.endSection();
     }
 
@@ -1314,27 +1339,56 @@ public class Launcher extends StatefulActivity<LauncherState>
         mFocusHandler = mDragLayer.getFocusIndicatorHelper();
         mWorkspace = mDragLayer.findViewById(R.id.workspace);
         mEditModePageStrip = mDragLayer.findViewById(R.id.edit_mode_page_strip);
-        if (mEditModePageStrip != null) {
+        mEditModeActionBar = mDragLayer.findViewById(R.id.edit_mode_action_bar);
+        mEditModeSelectionBar = mDragLayer.findViewById(R.id.edit_mode_selection_bar);
+        if (mEditModePageStrip != null || mEditModeActionBar != null
+                || mEditModeSelectionBar != null) {
             mStateManager.addStateListener(new StateManager.StateListener<LauncherState>() {
                 @Override
                 public void onStateTransitionStart(LauncherState toState) {
                     if (toState == EDIT_MODE) {
                         long duration = EDIT_MODE.getTransitionDuration(Launcher.this, true);
-                        mEditModePageStrip.showForEditMode(mWorkspace, duration);
+                        if (mEditModePageStrip != null) {
+                            mEditModePageStrip.showForEditMode(mWorkspace, duration);
+                        }
+                        updateEditModeBars(duration);
+                        // Folder cards paint their own "to be selected" box, which only becomes
+                        // visible after their recorded display list is rebuilt.
+                        animateSelectionScale();
                     } else if (mStateManager.getCurrentStableState() == EDIT_MODE) {
                         long duration = EDIT_MODE.getTransitionDuration(Launcher.this, false);
-                        mEditModePageStrip.hideForEditMode(duration);
+                        if (mEditModePageStrip != null) {
+                            mEditModePageStrip.hideForEditMode(duration);
+                        }
+                        if (mEditModeActionBar != null) {
+                            mEditModeActionBar.hideForEditMode(duration);
+                        }
+                        if (mEditModeSelectionBar != null) {
+                            mEditModeSelectionBar.hideForEditMode(duration);
+                        }
+                        // LauncherX: leaving edit mode always drops the multi-selection.
+                        mEditModeSelection.clear();
                     }
                 }
 
                 @Override
                 public void onStateTransitionComplete(LauncherState finalState) {
-                    if (finalState == EDIT_MODE) {
+                    if (finalState == EDIT_MODE && mEditModePageStrip != null) {
                         mEditModePageStrip.maybeShowEducationTip(Launcher.this);
                     }
+                    // Once the state settled, rebuild the edit-mode adornments so the folder-card
+                    // selection box appears/disappears together with the per-icon ones.
+                    animateSelectionScale();
                 }
             });
         }
+        mEditModeSelection.addListener(() -> {
+            if (isInState(EDIT_MODE)) {
+                updateEditModeBars(0);
+                invalidateEditModeIcons();
+            }
+            animateSelectionScale();
+        });
         mWorkspace.initParentViews(mDragLayer);
         mOverviewPanel = findViewById(R.id.overview_panel);
         mHotseat = findViewById(R.id.hotseat);
@@ -1609,7 +1663,12 @@ public class Launcher extends StatefulActivity<LauncherState>
                 != Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT);
 
         // Check this condition before handling isActionMain, as this will get reset.
-        boolean shouldMoveToDefaultScreen = alreadyOnHome && isInState(NORMAL)
+        // LauncherX: also move to the default page for the system swipe-up gesture while already
+        // on the home screen. That gesture takes window focus while it runs, so alreadyOnHome is
+        // false, but no other activity has stopped the launcher. When coming back from an app
+        // (or recents) the launcher was stopped, so the workspace keeps the page the user left.
+        boolean shouldMoveToDefaultScreen = (alreadyOnHome || !mStoppedSinceResume)
+                && isInState(NORMAL)
                 && AbstractFloatingView.getTopOpenView(this) == null;
         boolean isActionMain = Intent.ACTION_MAIN.equals(intent.getAction());
         boolean internalStateHandled = ACTIVITY_TRACKER.handleNewIntent(this);
@@ -1631,7 +1690,7 @@ public class Launcher extends StatefulActivity<LauncherState>
                     // Only change state, if not already the same. This prevents cancelling any
                     // animations running as part of resume
                     boolean animate = mStateManager.shouldAnimateStateChange();
-                    if (!LawnchairApp.isRecentsEnabled()) {
+                    if (!LauncherXApp.isRecentsEnabled()) {
                         animate &= alreadyOnHome;
                     }
                     mStateManager.goToState(NORMAL, animate);
@@ -1990,6 +2049,222 @@ public class Launcher extends StatefulActivity<LauncherState>
         return newFolder;
     }
 
+    /**
+     * LauncherX: applies the batch "group" action to the current edit-mode selection.
+     *
+     * <ul>
+     *   <li>Two or more loose apps: creates a new folder at the first item's cell.</li>
+     *   <li>One folder plus loose apps: drops those apps into that folder.</li>
+     *   <li>Two or more folders (optionally with loose apps): merges them all into the first
+     *       folder and removes the emptied ones. Loose apps are added too.</li>
+     * </ul>
+     */
+    public void createFolderFromSelection() {
+        final List<ItemInfo> selection = mEditModeSelection.items();
+        final List<FolderInfo> selectedFolders = new ArrayList<>();
+        final List<ItemInfo> selectedApps = new ArrayList<>();
+        for (ItemInfo info : selection) {
+            if (info.container != LauncherSettings.Favorites.CONTAINER_DESKTOP) {
+                continue;
+            }
+            if (info instanceof FolderInfo) {
+                selectedFolders.add((FolderInfo) info);
+            } else if (info instanceof WorkspaceItemInfo && Folder.willAccept(info)) {
+                selectedApps.add(info);
+            }
+        }
+        final int usable = selectedFolders.size() + selectedApps.size();
+        if (usable < 2 || (selectedFolders.isEmpty() && selectedApps.size() < 2)) {
+            return;
+        }
+
+        final FolderIcon targetIcon;
+        final int screenId;
+        if (selectedFolders.isEmpty()) {
+            // All loose apps: create a brand new folder at the first item's cell.
+            final View anchorView = mWorkspace.getViewByItemId(selectedApps.get(0).id);
+            if (!(anchorView instanceof BubbleTextView)) {
+                return;
+            }
+            final CellLayout anchorLayout = mWorkspace.getParentCellLayoutForView(anchorView);
+            if (anchorLayout == null
+                    || !(anchorView.getLayoutParams() instanceof CellLayoutLayoutParams lp)) {
+                return;
+            }
+            screenId = mWorkspace.getCellLayoutId(anchorLayout);
+            detachFromWorkspace(selectedApps);
+            mEditModeSelection.clear();
+            targetIcon = addFolder(anchorLayout,
+                    LauncherSettings.Favorites.CONTAINER_DESKTOP, screenId, lp.getCellX(),
+                    lp.getCellY());
+            targetIcon.prepareCreateAnimation(anchorView);
+        } else {
+            // Reuse the first selected folder and fold everything else into it.
+            final View targetView = mWorkspace.getViewByItemId(selectedFolders.get(0).id);
+            if (!(targetView instanceof FolderIcon folderIcon)) {
+                return;
+            }
+            final CellLayout targetLayout = mWorkspace.getParentCellLayoutForView(targetView);
+            if (targetLayout == null) {
+                return;
+            }
+            screenId = mWorkspace.getCellLayoutId(targetLayout);
+            targetIcon = folderIcon;
+            detachFromWorkspace(selectedApps);
+            mEditModeSelection.clear();
+        }
+
+        final Folder targetFolder = targetIcon.getFolder();
+        for (ItemInfo app : selectedApps) {
+            app.cellX = -1;
+            app.cellY = -1;
+            targetFolder.addFolderContent(app);
+        }
+
+        // Merge every other selected folder into the target, then drop the empty shells.
+        for (int i = 1; i < selectedFolders.size(); i++) {
+            final FolderInfo source = selectedFolders.get(i);
+            final View sourceView = mWorkspace.getViewByItemId(source.id);
+            final List<ItemInfo> contents = new ArrayList<>(source.getContents());
+            for (ItemInfo content : contents) {
+                content.cellX = -1;
+                content.cellY = -1;
+                targetFolder.addFolderContent(content);
+            }
+            // The children already belong to the target in-memory and in the DB, so forget them
+            // before deleting the shell to avoid cascading their removal.
+            source.getContents().clear();
+            removeItem(sourceView, source, true);
+        }
+
+        // Selection may have spanned multiple pages, so bring the target folder into view.
+        final int anchorScreen = screenId;
+        mWorkspace.post(() -> mWorkspace.snapToPageImmediately(anchorScreen));
+    }
+
+    /** LauncherX: detaches the given workspace items' views, leaving their data rows in place. */
+    private void detachFromWorkspace(List<ItemInfo> items) {
+        for (ItemInfo info : items) {
+            final View view = mWorkspace.getViewByItemId(info.id);
+            if (view == null) {
+                continue;
+            }
+            final CellLayout parent = mWorkspace.getParentCellLayoutForView(view);
+            if (parent != null) {
+                parent.removeView(view);
+            }
+        }
+    }
+
+    /**
+     * LauncherX: compacts the home screen by removing empty cells. Each page is repacked
+     * row-major in the current reading order, so items slide up and left to fill gaps while the
+     * relative order and widget sizes are preserved.
+     */
+    public void tidyUpWorkspace() {
+        if (mWorkspace == null) {
+            return;
+        }
+        final int pageCount = mWorkspace.getPageCount();
+        for (int page = 0; page < pageCount; page++) {
+            if (mWorkspace.getPageAt(page) instanceof CellLayout cellLayout) {
+                tidyUpPage(cellLayout, mWorkspace.getCellLayoutId(cellLayout));
+            }
+        }
+    }
+
+    private void tidyUpPage(CellLayout cellLayout, int screenId) {
+        final ViewGroup container = cellLayout.getShortcutsAndWidgets();
+        if (container == null) {
+            return;
+        }
+        final int childCount = container.getChildCount();
+        final ArrayList<View> views = new ArrayList<>(childCount);
+        for (int i = 0; i < childCount; i++) {
+            final View child = container.getChildAt(i);
+            if (child.getTag() instanceof ItemInfo
+                    && child.getLayoutParams() instanceof CellLayoutLayoutParams) {
+                views.add(child);
+            }
+        }
+        if (views.size() < 2) {
+            return;
+        }
+        views.sort((a, b) -> {
+            final CellLayoutLayoutParams la = (CellLayoutLayoutParams) a.getLayoutParams();
+            final CellLayoutLayoutParams lb = (CellLayoutLayoutParams) b.getLayoutParams();
+            if (la.getCellY() != lb.getCellY()) {
+                return Integer.compare(la.getCellY(), lb.getCellY());
+            }
+            return Integer.compare(la.getCellX(), lb.getCellX());
+        });
+
+        final int countX = cellLayout.getCountX();
+        final int countY = cellLayout.getCountY();
+        final boolean[][] occupied = new boolean[countX][countY];
+        final ArrayList<int[]> placements = new ArrayList<>(views.size());
+        for (View child : views) {
+            final CellLayoutLayoutParams lp = (CellLayoutLayoutParams) child.getLayoutParams();
+            final int spanX = Math.max(1, Math.min(lp.cellHSpan, countX));
+            final int spanY = Math.max(1, Math.min(lp.cellVSpan, countY));
+            cellLayout.markCellsAsUnoccupiedForView(child);
+            final int[] slot = findFreeCell(occupied, countX, countY, spanX, spanY);
+            if (slot == null) {
+                placements.add(null);
+                continue;
+            }
+            for (int dy = 0; dy < spanY; dy++) {
+                for (int dx = 0; dx < spanX; dx++) {
+                    occupied[slot[0] + dx][slot[1] + dy] = true;
+                }
+            }
+            placements.add(new int[]{slot[0], slot[1], spanX, spanY});
+        }
+
+        for (int i = 0; i < views.size(); i++) {
+            final View child = views.get(i);
+            final int[] slot = placements.get(i);
+            if (slot == null) {
+                cellLayout.markCellsAsOccupiedForView(child);
+                continue;
+            }
+            final CellLayoutLayoutParams lp = (CellLayoutLayoutParams) child.getLayoutParams();
+            if (lp.getCellX() == slot[0] && lp.getCellY() == slot[1]
+                    && lp.cellHSpan == slot[2] && lp.cellVSpan == slot[3]) {
+                cellLayout.markCellsAsOccupiedForView(child);
+                continue;
+            }
+            final ItemInfo info = (ItemInfo) child.getTag();
+            container.removeView(child);
+            mWorkspace.addInScreen(child, LauncherSettings.Favorites.CONTAINER_DESKTOP, screenId,
+                    slot[0], slot[1], slot[2], slot[3]);
+            cellLayout.onDropChild(child);
+            mModelWriter.modifyItemInDatabase(info, LauncherSettings.Favorites.CONTAINER_DESKTOP,
+                    screenId, slot[0], slot[1], slot[2], slot[3]);
+        }
+    }
+
+    private static int[] findFreeCell(boolean[][] occupied, int countX, int countY, int spanX,
+            int spanY) {
+        for (int y = 0; y + spanY <= countY; y++) {
+            for (int x = 0; x + spanX <= countX; x++) {
+                boolean free = true;
+                for (int dy = 0; dy < spanY && free; dy++) {
+                    for (int dx = 0; dx < spanX; dx++) {
+                        if (occupied[x + dx][y + dy]) {
+                            free = false;
+                            break;
+                        }
+                    }
+                }
+                if (free) {
+                    return new int[]{x, y};
+                }
+            }
+        }
+        return null;
+    }
+
     @Override
     public Rect getFolderBoundingBox() {
         // We need to bound the folder to the currently visible workspace area
@@ -2099,8 +2374,96 @@ public class Launcher extends StatefulActivity<LauncherState>
                 mTouchInProgress = false;
                 break;
         }
+        maybeHandleSecondaryDragPageSwipe(ev);
         TestLogging.recordMotionEvent(TestProtocol.SEQUENCE_MAIN, "Touch event", ev);
         return super.dispatchTouchEvent(ev);
+    }
+
+    /**
+     * While an item is being dragged with one finger, a horizontal swipe with a second finger
+     * flips the workspace page so the item can be dropped on a page that is not the current one
+     * without hovering over the screen edge first.
+     */
+    private void maybeHandleSecondaryDragPageSwipe(MotionEvent ev) {
+        final LauncherState state = mStateManager.getState();
+        final boolean dragging = mDragController != null && mDragController.isDragging();
+        if (!dragging || mWorkspace == null
+                || (state != LauncherState.NORMAL && state != LauncherState.SPRING_LOADED
+                        && state != LauncherState.EDIT_MODE)
+                || Folder.getOpen(this) != null) {
+            mSecondaryDragPointerId = INVALID_POINTER;
+            mSecondaryDragPageFlipped = false;
+            return;
+        }
+        final float threshold = getResources().getDisplayMetrics().density * 56f;
+        final int action = ev.getActionMasked();
+        if (action == MotionEvent.ACTION_MOVE && mSecondaryDragPointerId == INVALID_POINTER
+                && ev.getPointerCount() >= 2) {
+            // The second finger can go down before the drag actually starts, in which case its
+            // ACTION_POINTER_DOWN was ignored. Adopt the newest pointer so the swipe still works.
+            final int index = ev.getPointerCount() - 1;
+            mSecondaryDragPointerId = ev.getPointerId(index);
+            mSecondaryDragPointerX = ev.getX(index);
+            mSecondaryDragPageFlipped = false;
+            return;
+        }
+        switch (action) {
+            case MotionEvent.ACTION_POINTER_DOWN: {
+                final int index = ev.getActionIndex();
+                if (index != 0) {
+                    mSecondaryDragPointerId = ev.getPointerId(index);
+                    mSecondaryDragPointerX = ev.getX(index);
+                    mSecondaryDragPageFlipped = false;
+                }
+                break;
+            }
+            case MotionEvent.ACTION_MOVE: {
+                if (mSecondaryDragPointerId == INVALID_POINTER) {
+                    break;
+                }
+                final int index = ev.findPointerIndex(mSecondaryDragPointerId);
+                if (index < 0) {
+                    break;
+                }
+                final float x = ev.getX(index);
+                final float dx = x - mSecondaryDragPointerX;
+                if (Math.abs(dx) >= threshold && !mSecondaryDragPageFlipped) {
+                    mSecondaryDragPageFlipped = true;
+                    flipWorkspacePageForSecondaryDrag(dx);
+                    mSecondaryDragPointerX = x;
+                }
+                break;
+            }
+            case MotionEvent.ACTION_POINTER_UP: {
+                if (ev.getPointerId(ev.getActionIndex()) != mSecondaryDragPointerId) {
+                    break;
+                }
+                // A quick flick that never reached the live threshold still flips the page.
+                final float dx = ev.getX(ev.getActionIndex()) - mSecondaryDragPointerX;
+                if (Math.abs(dx) >= threshold * 0.5f && !mSecondaryDragPageFlipped) {
+                    mSecondaryDragPageFlipped = true;
+                    flipWorkspacePageForSecondaryDrag(dx);
+                }
+                mSecondaryDragPointerId = INVALID_POINTER;
+                break;
+            }
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL: {
+                mSecondaryDragPointerId = INVALID_POINTER;
+                mSecondaryDragPageFlipped = false;
+                break;
+            }
+            default:
+                break;
+        }
+    }
+
+    private void flipWorkspacePageForSecondaryDrag(float dx) {
+        final int current = mWorkspace.getNextPage();
+        final int target = current + (dx > 0 ? -1 : 1);
+        if (target >= 0 && target < mWorkspace.getPageCount()) {
+            mWorkspace.snapToPage(target);
+        }
     }
 
     @Override
@@ -2134,6 +2497,7 @@ public class Launcher extends StatefulActivity<LauncherState>
 
     @Override
     public RunnableList startActivitySafely(View v, Intent intent, ItemInfo item) {
+        LargeFolderBinder.setLastInlineLaunch(v, item);
         if (!hasBeenResumed()) {
             RunnableList result = new RunnableList();
             // Workaround an issue where the WM launch animation is clobbered when finishing the
@@ -2389,6 +2753,7 @@ public class Launcher extends StatefulActivity<LauncherState>
         }
 
         List<CellLayout> containers = new ArrayList<>(mWorkspace.getPanelCount() + 1);
+        mWorkspace.forEachVisiblePage(page -> containers.add((CellLayout) page));
         Hotseat hotseat = mWorkspace.getHotseat();
         if (hotseat != null) {
             CellLayout currentPage = hotseat.getCurrentPageLayout();
@@ -2396,15 +2761,50 @@ public class Launcher extends StatefulActivity<LauncherState>
                 containers.add(currentPage);
             }
         }
-        mWorkspace.forEachVisiblePage(page -> containers.add((CellLayout) page));
         CellLayout[] containerArray = containers.toArray(new CellLayout[0]);
         LauncherBindableItemsContainer visibleContainer =
                 op -> mapOverCellLayouts(containerArray, op);
 
+        // An app launched from an inline large-folder cell always returns to that
+        // cell, even when the same app also exists on the desktop or dock: the
+        // launch cookie is not delivered back on gesture-nav close, so package
+        // matching alone would land on the desktop/dock duplicate.
+        final int inlineLaunchId = LargeFolderBinder.getLastInlineLaunchItemId();
+        if (inlineLaunchId != ItemInfo.NO_ID) {
+            View inlineLaunch = null;
+            for (CellLayout layout : containerArray) {
+                if (layout == null) continue;
+                ShortcutAndWidgetContainer container = layout.getShortcutsAndWidgets();
+                for (int i = 0; i < container.getChildCount(); i++) {
+                    View child = container.getChildAt(i);
+                    if (child instanceof FolderIcon fi && fi.isInlineActive()) {
+                        inlineLaunch = fi.getInlineChildFor(
+                                info -> info.id == inlineLaunchId
+                                        && packageAndUserAndApp.test(info));
+                        if (inlineLaunch != null) break;
+                    }
+                }
+                if (inlineLaunch != null) break;
+            }
+            if (inlineLaunch != null) {
+                return inlineLaunch;
+            }
+        }
+
         // Order: Preferred item by itself or in folder, then by matching package/user
-        return visibleContainer.getFirstMatch(
+        View match = visibleContainer.getFirstMatch(
                 preferredItem, forFolderMatch(preferredItem),
                 packageAndUserAndApp, forFolderMatch(packageAndUserAndApp));
+        if (match instanceof FolderIcon folderIcon) {
+            // For inline large folders, animate to the app's actual grid cell
+            // instead of the hidden legacy preview-circle bounds.
+            View inlineChild = folderIcon.getInlineChildFor(
+                    info -> preferredItem.test(info) || packageAndUserAndApp.test(info));
+            if (inlineChild != null) {
+                return inlineChild;
+            }
+        }
+        return match;
     }
 
     private ValueAnimator createNewAppBounceAnimation(View v, int i) {
@@ -2433,7 +2833,13 @@ public class Launcher extends StatefulActivity<LauncherState>
      * Informs us that the page transition has ended, so that we can react to the newly selected
      * page if we want to.
      */
-    public void onPageEndTransition() {}
+    public void onPageEndTransition() {
+        // The "set as default page" entry is only offered while the current page is not the
+        // default one, so it has to be re-evaluated when the user swipes to another page.
+        if (mStateManager != null && mStateManager.getState() == EDIT_MODE) {
+            refreshEditModeBars();
+        }
+    }
 
     /**
      * See {@code LauncherBindingDelegate}
@@ -2640,6 +3046,15 @@ public class Launcher extends StatefulActivity<LauncherState>
     public void showDefaultOptions(float x, float y) {
         OptionsPopupView.show(this, getPopupTarget(x, y), OptionsPopupView.getOptions(this),
                 false);
+    }
+
+    /**
+     * Called when the user long-presses empty space on the workspace. Subclasses may override this
+     * to enter a different UI (for example the home-screen edit state) instead of showing the
+     * options popup.
+     */
+    public void onWorkspaceEmptySpaceLongPress(float x, float y) {
+        showDefaultOptions(x, y);
     }
 
     @Override
@@ -2913,6 +3328,121 @@ public class Launcher extends StatefulActivity<LauncherState>
 
     public Workspace<?> getWorkspace() {
         return mWorkspace;
+    }
+
+    /** LauncherX: multi-selection state shared by the edit-mode icon views and action bar. */
+    public com.jerry.launcherx.views.EditModeSelection getEditModeSelection() {
+        return mEditModeSelection;
+    }
+
+    /**
+     * LauncherX: shows the selection action bar (and hides the regular one) whenever at least one
+     * item is selected, and swaps back otherwise.
+     */
+    private void updateEditModeBars(long duration) {
+        final boolean selecting = mEditModeSelection.isActive();
+        if (mEditModeSelectionBar != null) {
+            if (selecting) {
+                mEditModeSelectionBar.showForEditMode(Launcher.this, duration);
+            } else {
+                mEditModeSelectionBar.hideForEditMode(duration);
+            }
+        }
+        if (mEditModeActionBar != null) {
+            if (selecting) {
+                mEditModeActionBar.hideForEditMode(duration);
+            } else {
+                mEditModeActionBar.showForEditMode(Launcher.this, duration);
+            }
+        }
+    }
+
+    /**
+     * LauncherX: rebuilds the edit-mode bars, e.g. after the current page became the default one
+     * (the "set as default page" entry is only offered while it is not).
+     */
+    public void refreshEditModeBars() {
+        if (mWorkspace != null) {
+            updateEditModeBars(0);
+        }
+    }
+
+    /**
+     * LauncherX: forces every workspace icon to redraw so edit-mode adornments (selection check
+     * marks and remove badges) update immediately. Subclasses that own a jiggling animator both
+     * fulfil this through it.
+     */
+    public void invalidateEditModeIcons() {
+        if (mWorkspace != null) {
+            mWorkspace.invalidate();
+        }
+    }
+
+    /**
+     * LauncherX: gently shrinks the selected workspace icons (and grows them back) to give tactile
+     * feedback for the edit-mode multi-selection.
+     */
+    private void animateSelectionScale() {
+        if (mWorkspace == null) {
+            return;
+        }
+        final boolean feedback = PreferenceCacheExtensionsKt.firstCached(
+                PreferenceManager2.getInstance(this).getEditModeSelectionFeedback());
+        for (int page = 0; page < mWorkspace.getPageCount(); page++) {
+            if (!(mWorkspace.getPageAt(page) instanceof CellLayout cellLayout)) {
+                continue;
+            }
+            final ViewGroup shortcuts = cellLayout.getShortcutsAndWidgets();
+            if (shortcuts == null) {
+                continue;
+            }
+            final int childCount = shortcuts.getChildCount();
+            for (int i = 0; i < childCount; i++) {
+                final View child = shortcuts.getChildAt(i);
+                final Object tag = child.getTag();
+                final boolean selected = feedback && tag instanceof ItemInfo
+                        && mEditModeSelection.isSelected((ItemInfo) tag);
+                if (child instanceof FolderIcon folderIcon) {
+                    final com.jerry.launcherx.modern.folder.LargeFolderView inlineGrid =
+                            folderIcon.getInlineGrid();
+                    if (inlineGrid != null) {
+                        // The card paints its own selection box/check in dispatchDraw, and its
+                        // recorded display list is not rebuilt by a bare scale animation, so it
+                        // has to be invalidated whenever the selection state (or edit mode
+                        // itself) changes.
+                        inlineGrid.invalidate();
+                        // Inline large folder: selecting one of its apps shrinks only that cell
+                        // and keeps the folder card in place; selecting the folder itself shrinks
+                        // the whole card as usual.
+                        if (!selected) {
+                            scaleInlineSelection(inlineGrid, feedback);
+                            continue;
+                        }
+                    }
+                }
+                final float target = selected ? 0.88f : 1f;
+                if (Float.compare(child.getScaleX(), target) != 0) {
+                    child.animate().scaleX(target).scaleY(target).setDuration(150).start();
+                }
+            }
+        }
+    }
+
+    /** LauncherX: applies the selection shrink to the cells of an inline large folder. */
+    private void scaleInlineSelection(
+            com.jerry.launcherx.modern.folder.LargeFolderView inlineGrid, boolean feedback) {
+        // Repaint the card so its folder-level check follows the current selection.
+        inlineGrid.invalidate();
+        for (int i = 0; i < inlineGrid.getChildCount(); i++) {
+            final View cell = inlineGrid.getChildAt(i);
+            final Object tag = cell.getTag();
+            final boolean selected = feedback && tag instanceof ItemInfo
+                    && mEditModeSelection.isSelected((ItemInfo) tag);
+            final float target = selected ? 0.88f : 1f;
+            if (Float.compare(cell.getScaleX(), target) != 0) {
+                cell.animate().scaleX(target).scaleY(target).setDuration(150).start();
+            }
+        }
     }
 
     public Hotseat getHotseat() {

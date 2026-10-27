@@ -56,7 +56,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
-import app.lawnchair.preferences.PreferenceManager;
+import com.jerry.launcherx.preferences.PreferenceManager;
+import com.jerry.launcherx.preferences2.PreferenceCacheExtensionsKt;
+import com.jerry.launcherx.preferences2.PreferenceManager2;
 
 /**
  * Manages the drawing and animations of {@link PreviewItemDrawingParams} for a
@@ -75,6 +77,7 @@ public class PreviewItemManager {
     private float mIntrinsicIconSize = -1;
     private int mTotalWidth = -1;
     private int mPrevTopPadding = -1;
+    private float mPrevMarginDp = -1;
     private Drawable mReferenceDrawable = null;
 
     private int mNumOfPrevItems = 0;
@@ -116,24 +119,38 @@ public class PreviewItemManager {
         return animateDrawable;
     }
 
-    public void recomputePreviewDrawingParams() {
-        if (mReferenceDrawable != null) {
-            computePreviewDrawingParams(mReferenceDrawable.getIntrinsicWidth(),
-                    mIcon.getMeasuredWidth());
-        }
-    }
+	public void recomputePreviewDrawingParams() {
+		if (mReferenceDrawable == null) {
+			for (int i = 0; i < mFirstPageParams.size(); i++) {
+				Drawable d = mFirstPageParams.get(i).drawable;
+				if (d != null) {
+					mReferenceDrawable = d;
+					break;
+				}
+			}
+		}
+		if (mReferenceDrawable != null) {
+			computePreviewDrawingParams(mReferenceDrawable.getIntrinsicWidth(),
+					mIcon.getMeasuredWidth());
+		}
+	}
 
     private void computePreviewDrawingParams(int drawableSize, int totalSize) {
+        // The margin preference feeds PreviewBackground.setup, so it must take part in
+        // the recompute guard: otherwise changing it would not re-init the layout rule.
+        float marginDp = PreferenceCacheExtensionsKt
+                .firstCached(PreferenceManager2.getInstance(mContext).getFolderPreviewMargin());
         if (mIntrinsicIconSize != drawableSize || mTotalWidth != totalSize ||
-                mPrevTopPadding != mIcon.getPaddingTop()) {
+                mPrevTopPadding != mIcon.getPaddingTop() || mPrevMarginDp != marginDp) {
             mIntrinsicIconSize = drawableSize;
             mTotalWidth = totalSize;
             mPrevTopPadding = mIcon.getPaddingTop();
+            mPrevMarginDp = marginDp;
 
             mIcon.mBackground.setup(mIcon.getContext(), mIcon.mActivity, mIcon, mTotalWidth,
                     mIcon.getPaddingTop());
             mIcon.mPreviewLayoutRule.init(
-                    mIcon.mBackground.previewSize, mIntrinsicIconSize,
+                    mIcon.mBackground.layoutSize, mIntrinsicIconSize,
                     Utilities.isRtl(mIcon.getResources()),
                     mIcon.mActivity.getDeviceProfile().numFolderColumns
             );
@@ -156,7 +173,9 @@ public class PreviewItemManager {
         float iconSize = mIcon.mActivity.getDeviceProfile().iconSizePx;
 
         final float scale = iconSize / mReferenceDrawable.getIntrinsicWidth();
-        final float trans = (mIcon.mBackground.previewSize - iconSize) / 2;
+        // Params are relative to the layout area; this keeps the full-size icon centered
+        // on the background.
+        final float trans = (mIcon.mBackground.layoutSize - iconSize) / 2;
 
         params.update(trans, trans, scale);
         return params;
@@ -180,10 +199,10 @@ public class PreviewItemManager {
      */
     public void draw(Canvas canvas) {
         int saveCount = canvas.getSaveCount();
-        // The items are drawn in coordinates relative to the preview offset
+        // The items are drawn in coordinates relative to the preview layout offset
         PreviewBackground bg = mIcon.getFolderBackground();
         Path clipPath = bg.getClipPath();
-        PointF firstPageOffset = new PointF(bg.basePreviewOffsetX, bg.basePreviewOffsetY);
+        PointF firstPageOffset = new PointF(bg.layoutOffsetX, bg.layoutOffsetY);
         drawParams(canvas, mFirstPageParams, firstPageOffset, /* shouldClipPath */ false, clipPath);
         canvas.restoreToCount(saveCount);
     }
@@ -386,7 +405,7 @@ public class PreviewItemManager {
         p.anim = anim;
     }
 
-    /** Lawnchair: Find the correct folder size depending on which parent owned them 
+    /** LauncherX: Find the correct folder size depending on which parent owned them 
      * @return Icon size that's typically use for workspace or size that's for allapps page */
     private int getChildIconSize() {
         if (mIcon.isInAppDrawer()) {
@@ -397,7 +416,7 @@ public class PreviewItemManager {
 
     @VisibleForTesting
     public void setDrawable(PreviewItemDrawingParams p, ItemInfo item) {
-        // Lawnchair: Find the correct folder size depending on which parent owned them
+        // LauncherX: Find the correct folder size depending on which parent owned them
         int iconSize = getChildIconSize();
         if (item instanceof WorkspaceItemInfo wii) {
             if (isActivePendingIcon(wii)) {

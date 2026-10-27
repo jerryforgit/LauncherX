@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace 'app.lawnchair.baseline'
+    namespace 'com.jerry.launcherx.baseline'
 
     defaultConfig {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"

@@ -1,4 +1,4 @@
-// Lawnchair: Without this, ILauncherProxy.aidl would not compile
+// LauncherX: Without this, ILauncherProxy.aidl would not compile
 
 /* //device/java/android/android/app/IActivityPendingResult.aidl
 **

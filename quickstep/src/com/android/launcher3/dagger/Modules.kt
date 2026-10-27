@@ -39,14 +39,14 @@ import dagger.Binds
 import dagger.Module
 import dagger.Provides
 
-import app.lawnchair.factory.LawnchairWidgetHolder
-import app.lawnchair.util.LawnchairWindowManagerProxy
+import com.jerry.launcherx.factory.LauncherXWidgetHolder
+import com.jerry.launcherx.util.LauncherXWindowManagerProxy
 
 private object Modules {}
 
 @Module
 abstract class WindowManagerProxyModule {
-    @Binds abstract fun bindWindowManagerProxy(proxy: LawnchairWindowManagerProxy): WindowManagerProxy
+    @Binds abstract fun bindWindowManagerProxy(proxy: LauncherXWindowManagerProxy): WindowManagerProxy
 }
 
 @Module
@@ -73,7 +73,7 @@ abstract class ApiWrapperModule {
 abstract class WidgetModule {
 
     @Binds
-    abstract fun bindWidgetHolderFactory(factor: LawnchairWidgetHolder.Factory): WidgetHolderFactory
+    abstract fun bindWidgetHolderFactory(factor: LauncherXWidgetHolder.Factory): WidgetHolderFactory
 }
 
 @Module

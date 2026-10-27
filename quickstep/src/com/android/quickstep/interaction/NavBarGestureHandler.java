@@ -41,7 +41,7 @@ import com.android.launcher3.util.VibratorWrapper;
 import com.android.quickstep.util.MotionPauseDetector;
 import com.android.quickstep.util.NavBarPosition;
 import com.android.quickstep.util.TriggerSwipeUpTouchTracker;
-import app.lawnchair.util.LawnchairUtilsKt;
+import com.jerry.launcherx.util.LauncherXUtilsKt;
 
 /** Utility class to handle Home gesture. */
 public class NavBarGestureHandler implements OnTouchListener,

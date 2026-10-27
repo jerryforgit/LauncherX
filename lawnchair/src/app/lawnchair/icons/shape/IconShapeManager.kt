@@ -1,28 +1,28 @@
 /*
  *     Copyright (C) 2019 paphonb@xda
  *
- *     This file is part of Lawnchair Launcher.
+ *     This file is part of LauncherX Launcher.
  *
  *     Lawnchair Launcher is free software: you can redistribute it and/or modify
  *     it under the terms of the GNU General Public License as published by
  *     the Free Software Foundation, either version 3 of the License, or
  *     (at your option) any later version.
  *
- *     Lawnchair Launcher is distributed in the hope that it will be useful,
+ *     LauncherX Launcher is distributed in the hope that it will be useful,
  *     but WITHOUT ANY WARRANTY; without even the implied warranty of
  *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *     GNU General Public License for more details.
  *
  *     You should have received a copy of the GNU General Public License
- *     along with Lawnchair Launcher.  If not, see <https://www.gnu.org/licenses/>.
+ *     along with LauncherX Launcher.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 package app.lawnchair.icons.shape
 
 import android.content.Context
 import android.graphics.drawable.AdaptiveIconDrawable
-import app.lawnchair.preferences2.PreferenceManager2
-import app.lawnchair.preferences2.firstCached
+import com.jerry.launcherx.preferences2.PreferenceManager2
+import com.jerry.launcherx.preferences2.firstCached
 import com.android.launcher3.Utilities
 import com.android.launcher3.dagger.ApplicationContext
 import com.android.launcher3.dagger.LauncherAppComponent

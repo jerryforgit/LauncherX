@@ -54,9 +54,9 @@ import android.window.WindowContainerTransaction
 import androidx.annotation.MainThread
 import androidx.annotation.VisibleForTesting
 import androidx.annotation.WorkerThread
-import app.lawnchair.util.isAndroidBaklavaInitial
-import app.lawnchair.util.isNothingOs
-//import app.lawnchair.gestures.type.GestureType
+import com.jerry.launcherx.util.isAndroidBaklavaInitial
+import com.jerry.launcherx.util.isNothingOs
+//import com.jerry.launcherx.gestures.type.GestureType
 import com.android.internal.logging.InstanceId
 import com.android.internal.util.ScreenshotRequest
 import com.android.internal.view.AppearanceRegion

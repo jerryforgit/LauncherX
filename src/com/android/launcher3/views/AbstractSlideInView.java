@@ -235,10 +235,20 @@ public abstract class AbstractSlideInView<T extends Context & ActivityContext>
     protected void onOpenCloseAnimationPending(PendingAnimation animation) {}
 
     protected void attachToContainer() {
-        if (mColorScrim != null) {
-            getPopupContainer().addView(mColorScrim);
+        // LauncherX: other children of the drag layer (e.g. the dock capsule, which uses
+        // elevation for its shadow) are drawn ordered by Z. Make sure this sliding view and
+        // its scrim always sit above everything already in the container.
+        final ViewGroup container = getPopupContainer();
+        float topZ = 0f;
+        for (int i = 0; i < container.getChildCount(); i++) {
+            topZ = Math.max(topZ, container.getChildAt(i).getZ());
         }
-        getPopupContainer().addView(this);
+        if (mColorScrim != null) {
+            mColorScrim.setZ(topZ + 1f);
+            container.addView(mColorScrim);
+        }
+        setZ(topZ + 2f);
+        container.addView(this);
     }
 
     /**

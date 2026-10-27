@@ -46,7 +46,6 @@ class FolderSpringAnimatorSet(val animatorSet: AnimatorSet) {
     }
 
     companion object Factory {
-        private const val LAUNCHER_SCALE = 0.975f
         private const val FOLDER_NAME_ALPHA_DURATION = 32
         private const val LARGE_FOLDER_FOOTER_DURATION = 128
         private const val STIFFNESS_SHAPE_POSITION = 380f
@@ -70,7 +69,9 @@ class FolderSpringAnimatorSet(val animatorSet: AnimatorSet) {
             val animatorSet = AnimatorSet()
             setupFolder(folder, folderAnimData)
             addFolderScaleAndTranslateAnimators(folder, animatorSet, folderAnimData)
-            addClipRevealAnimators(folder, animatorSet, clipRevealData)
+            if (!folderAnimData.isInline) {
+                addClipRevealAnimators(folder, animatorSet, clipRevealData)
+            }
             addAlphaAndColorAnimators(folder, animatorSet, folderAnimData)
             addScrimAnimators(
                 folder.context,
@@ -212,7 +213,7 @@ class FolderSpringAnimatorSet(val animatorSet: AnimatorSet) {
                 startDelay = if (animationData.isOpening) midDuration else 0,
                 stiffness = STIFFNESS_SHAPE_POSITION,
                 damping = DAMPING_SHAPE_POSITION,
-                startValue = -folder.elevation,
+                startValue = 0f,
                 endValue = 0f,
                 minVisibleChange = MIN_VISIBLE_CHANGE_PIXELS,
                 property = View.TRANSLATION_Z,
@@ -231,10 +232,10 @@ class FolderSpringAnimatorSet(val animatorSet: AnimatorSet) {
         ) {
             with(folder) {
                 val folderBackground = folder.background as GradientDrawable
-                // Set up the Folder background (respects Lawnchair folder color pref).
+                // Set up the Folder background (respects LauncherX folder color pref).
                 val isOpening = animationData.isOpening
-                val initialColor = app.lawnchair.util.resolveFolderPreviewColor(context)
-                val finalColor = app.lawnchair.util.resolveFolderBackgroundColor(context)
+                val initialColor = com.jerry.launcherx.util.resolveFolderPreviewColor(context)
+                val finalColor = com.jerry.launcherx.util.resolveFolderBackgroundColor(context)
                 folderBackground.mutate()
                 folderBackground.setColor(if (isOpening) initialColor else finalColor)
                 // TODO: convert to spring animation?
@@ -332,10 +333,13 @@ class FolderSpringAnimatorSet(val animatorSet: AnimatorSet) {
             if (launcher.isInState(LauncherState.ALL_APPS)) {
                 return
             }
+            launcher.hotseat?.setFolderPopupActive(isOpening)
             val scrimView = launcher.scrimView
-            val workspace = launcher.workspace
-            val hotseat = launcher.hotseat
             val finalScrimAlpha = if (isDarkTheme(context)) 0.32f else 0.2f
+            // Set the starting alpha before swapping in the opaque black background. The
+            // workspace scrim normally has alpha 1 with a transparent colour, so painting it
+            // black first would show one solid black frame and the desktop would flash.
+            scrimView.alpha = if (isOpening) 0f else finalScrimAlpha
             scrimView.setBackgroundColor(Color.BLACK)
             playSpringAnimation(
                 context = context,
@@ -350,32 +354,10 @@ class FolderSpringAnimatorSet(val animatorSet: AnimatorSet) {
                 property = LauncherAnimUtils.VIEW_ALPHA,
                 view = scrimView,
             )
-            playSpringAnimation(
-                context = context,
-                animatorSet = animatorSet,
-                isOpening = isOpening,
-                startDelay = 0,
-                stiffness = STIFFNESS_LAUNCHER_SCRIM,
-                damping = DAMPING_LAUNCHER_SCRIM,
-                startValue = 1f,
-                endValue = LAUNCHER_SCALE,
-                minVisibleChange = MIN_VISIBLE_CHANGE_SCALE,
-                property = SCALE_PROPERTY,
-                view = workspace,
-            )
-            playSpringAnimation(
-                context = context,
-                animatorSet = animatorSet,
-                isOpening = isOpening,
-                startDelay = 0,
-                stiffness = STIFFNESS_LAUNCHER_SCRIM,
-                damping = DAMPING_LAUNCHER_SCRIM,
-                startValue = 1f,
-                endValue = LAUNCHER_SCALE,
-                minVisibleChange = MIN_VISIBLE_CHANGE_SCALE,
-                property = SCALE_PROPERTY,
-                view = hotseat,
-            )
+            // The desktop (workspace + hotseat) is deliberately NOT scaled when the folder
+            // opens. Scaling it down shrank the dock bar and raised its top edge by ~19px, which
+            // read as the dock bar changing height/shifting every time a folder was opened. The
+            // dim, plus the content blur when the option is on, is enough of a depth cue.
             animatorSet.addListener(FolderScrimAnimationListener(scrimView, isOpening, launcher))
         }
 

@@ -44,15 +44,15 @@ import com.android.launcher3.model.data.ItemInfoWithIcon;
 import com.android.launcher3.model.data.WorkspaceItemInfo;
 import com.android.launcher3.util.TouchController;
 import com.android.launcher3.views.ActivityContext;
-import app.lawnchair.preferences2.PreferenceCacheExtensionsKt;
+import com.jerry.launcherx.preferences2.PreferenceCacheExtensionsKt;
 
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-import app.lawnchair.LawnchairApp;
-import app.lawnchair.preferences.PreferenceManager;
-import app.lawnchair.preferences2.PreferenceManager2;
+import com.jerry.launcherx.LauncherXApp;
+import com.jerry.launcherx.preferences.PreferenceManager;
+import com.jerry.launcherx.preferences2.PreferenceManager2;
 
 /**
  * Class for initiating a drag within a view or across multiple views.
@@ -128,6 +128,21 @@ public abstract class DragController<T extends ActivityContext>
         void onDragEnd();
     }
 
+    /**
+     * LauncherX: receives the drag view's translation on every drag move, so extra views (e.g. the
+     * rest of an edit-mode multi-selection) can travel together with the finger.
+     */
+    public interface OnDragMoveListener {
+        void onDragMove(float translationX, float translationY);
+    }
+
+    private OnDragMoveListener mOnDragMoveListener;
+
+    /** LauncherX: installs (or clears with {@code null}) the multi-select follower callback. */
+    public void setOnDragMoveListener(OnDragMoveListener listener) {
+        mOnDragMoveListener = listener;
+    }
+
     private PreferenceManager2 pref2;
 
     /**
@@ -135,7 +150,7 @@ public abstract class DragController<T extends ActivityContext>
      */
     public DragController(T activity) {
         mActivity = activity;
-        pref2 = PreferenceManager2.getInstance(LawnchairApp.getInstance());
+        pref2 = PreferenceManager2.getInstance(LauncherXApp.getInstance());
     }
 
     /**
@@ -462,6 +477,13 @@ public abstract class DragController<T extends ActivityContext>
 
     protected void handleMoveEvent(int x, int y) {
         mDragObject.dragView.move(x, y);
+
+        // LauncherX: keep the rest of an edit-mode multi-selection glued to the drag view.
+        if (mOnDragMoveListener != null) {
+            mOnDragMoveListener.onDragMove(
+                    mDragObject.dragView.getTranslationX(),
+                    mDragObject.dragView.getTranslationY());
+        }
 
         // Check if we are hovering over the scroll areas
         mDistanceSinceScroll += Math.hypot(mLastTouch.x - x, mLastTouch.y - y);

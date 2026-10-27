@@ -4,14 +4,14 @@
     android:id="@+id/popup_container"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    class="app.lawnchair.ui.popup.LawnchairPopupDialog$LawnchairOptionsPopUp">
+    class="com.jerry.launcherx.ui.popup.LauncherXPopupDialog$LauncherXOptionsPopUp">
     <LinearLayout
         android:orientation="vertical"
         android:id="@+id/wallpaper_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:elevation="2dp">
-        <app.lawnchair.ui.popup.WallpaperCarouselView
+        <com.jerry.launcherx.ui.popup.WallpaperCarouselView
             android:orientation="horizontal"
             android:id="@+id/wallpaper_carousel"
             android:layout_width="match_parent"

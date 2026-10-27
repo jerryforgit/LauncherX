@@ -67,6 +67,7 @@ import com.android.launcher3.celllayout.ReorderParameters;
 import com.android.launcher3.celllayout.ReorderPreviewAnimation;
 import com.android.launcher3.config.FeatureFlags;
 import com.android.launcher3.dragndrop.DraggableView;
+import com.android.launcher3.folder.FolderIcon;
 import com.android.launcher3.folder.PreviewBackground;
 import com.android.launcher3.model.data.ItemInfo;
 import com.android.launcher3.model.data.LauncherAppWidgetInfo;
@@ -79,7 +80,7 @@ import com.android.launcher3.util.Themes;
 import com.android.launcher3.util.Thunk;
 import com.android.launcher3.views.ActivityContext;
 import com.android.launcher3.widget.LauncherAppWidgetHostView;
-import app.lawnchair.preferences2.PreferenceCacheExtensionsKt;
+import com.jerry.launcherx.preferences2.PreferenceCacheExtensionsKt;
 
 import com.google.android.msdl.data.model.MSDLToken;
 
@@ -89,9 +90,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Stack;
 
-import app.lawnchair.preferences2.PreferenceManager2;
-import app.lawnchair.theme.color.tokens.ColorTokens;
-import app.lawnchair.theme.drawable.DrawableTokens;
+import com.jerry.launcherx.preferences2.PreferenceManager2;
+import com.jerry.launcherx.theme.color.tokens.ColorTokens;
+import com.jerry.launcherx.theme.drawable.DrawableTokens;
 
 public class CellLayout extends ViewGroup {
     private static final String TAG = "CellLayout";
@@ -413,6 +414,33 @@ public class CellLayout extends ViewGroup {
         mFixedCellHeight = mCellHeight = height;
         mShortcutsAndWidgets.setCellDimensions(mCellWidth, mCellHeight, mCountX, mCountY,
                 mBorderSpace);
+    }
+
+    /**
+     * Sets cell dimensions and an explicit border space. Used when recent-apps strip
+     * narrows the dock: the default hotseatBorderSpace is sized for the full-width
+     * row and would overflow once the row shrinks, so the caller must supply a
+     * proportionally reduced border space.
+     */
+    public void setCellDimensions(int width, int height, Point borderSpace) {
+        mFixedCellWidth = mCellWidth = width;
+        mFixedCellHeight = mCellHeight = height;
+        mBorderSpace = new Point(borderSpace);
+        mShortcutsAndWidgets.setCellDimensions(mCellWidth, mCellHeight, mCountX, mCountY,
+                mBorderSpace);
+    }
+
+    /** Returns a copy of the current border space. */
+    public Point getBorderSpace() {
+        return new Point(mBorderSpace);
+    }
+
+    /**
+     * Clears fixed cell dimensions and restores DeviceProfile border space without
+     * calling requestLayout(). Safe to call from within onMeasure.
+     */
+    public void clearFixedCellDimensions(DeviceProfile deviceProfile) {
+        resetCellSizeInternal(deviceProfile);
     }
 
     private void resetCellSizeInternal(DeviceProfile deviceProfile) {
@@ -949,11 +977,11 @@ public class CellLayout extends ViewGroup {
         if (child instanceof DraggableView) {
             DraggableView draggableChild = (DraggableView) child;
             if (draggableChild.getViewType() == DRAGGABLE_ICON) {
-                cellToPoint(cellX, cellY, outPoint);
-                draggableChild.getWorkspaceVisualDragBounds(mTempRect);
-                mTempRect.offset(outPoint[0], outPoint[1]);
-                outPoint[0] = mTempRect.centerX();
-                outPoint[1] = mTempRect.centerY();
+                // Use the child's real laid-out bounds so a multi-cell folder (whose
+                // visual center is not the center of this particular cell) is
+                // hit-tested at its true card center instead of an offset one.
+                outPoint[0] = child.getLeft() + child.getWidth() / 2;
+                outPoint[1] = child.getTop() + child.getHeight() / 2;
                 return;
             }
         }
@@ -964,6 +992,13 @@ public class CellLayout extends ViewGroup {
      * Returns the max distance from the center of a cell that can accept a drop to create a folder.
      */
     public float getFolderCreationRadius(int[] targetCell) {
+        View child = getChildAt(targetCell[0], targetCell[1]);
+        if (child instanceof FolderIcon && ((FolderIcon) child).isInlineActive()) {
+            // The whole inline large-folder card accepts the drop: use the circumscribed
+            // radius so every point over the card (including the corners) passes the
+            // distance gate.
+            return (float) Math.hypot(child.getWidth() / 2.0, child.getHeight() / 2.0);
+        }
         DeviceProfile grid = mActivity.getDeviceProfile();
         float iconVisibleRadius = ICON_VISIBLE_AREA_FACTOR * grid.iconSizePx / 2;
         // Halfway between reorder radius and icon.
@@ -988,6 +1023,16 @@ public class CellLayout extends ViewGroup {
             minRadius = Math.min(minRadius, centerPoint[1] - cellBoundsWithSpacing.top);
             minRadius = Math.min(minRadius, cellBoundsWithSpacing.right - centerPoint[0]);
             minRadius = Math.min(minRadius, cellBoundsWithSpacing.bottom - centerPoint[1]);
+            if (minRadius <= 0) {
+                // The visual center of a multi-cell folder lies outside this single cell,
+                // making the distance negative and rejecting every drop. Fall back to the
+                // circumscribed radius so drops anywhere over the folder are accepted.
+                View folderView = getChildAt(targetCell[0], targetCell[1]);
+                if (folderView != null) {
+                    minRadius = (int) Math.max(1, Math.hypot(folderView.getWidth() / 2.0,
+                            folderView.getHeight() / 2.0));
+                }
+            }
             return minRadius;
         }
         // Take up the entire cell, including space between this cell and the adjacent ones.

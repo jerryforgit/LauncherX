@@ -1,0 +1,31 @@
+LauncherX
+Copyright (c) 2026 Jerry
+
+This product is an unofficial fork of Lawnchair 16, which is based on Android Launcher3.
+
+Upstream projects and attribution
+---------------------------------
+Android Launcher3
+  https://source.android.com/docs/core/architecture/modular-system/launcher3
+  Copyright (c) The Android Open Source Project
+  Licensed under the Apache License, Version 2.0.
+
+Lawnchair
+  https://github.com/LawnchairLauncher/lawnchair
+  Copyright (c) Lawnchair contributors
+  Licensed under the Apache License, Version 2.0, except for files that carry
+  their own license headers (for example, the Flowerpot parser files are
+  licensed under GPL-3.0).
+
+platform_frameworks_libs_systemui
+  https://github.com/LawnchairLauncher/platform_frameworks_libs_systemui
+  Used as a Git submodule; see the submodule for its license notices.
+
+LauncherX modifications
+  Copyright (c) 2026 Jerry
+  Licensed under the Apache License, Version 2.0 unless a file states otherwise.
+
+This NOTICE file must be retained in redistributions. Upstream copyright and
+license headers must not be removed. If you distribute a build that combines
+GPL-3.0 files with Apache-2.0 files, comply with the GPL-3.0 requirements for
+the combined distribution.

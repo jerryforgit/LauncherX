@@ -66,7 +66,11 @@ class ScalingWorkspaceRevealAnim(
         private const val MAX_ALPHA = 1f
         private const val MIN_ALPHA = 0f
         internal const val MAX_SIZE = 1f
-        internal const val MIN_SIZE = 0.85f
+
+        // How far the workspace shrinks when it is revealed from an app (and for the predictive
+        // back peek). A deep shrink reads as the desktop being pushed far back; a subtle one keeps
+        // it visually anchored, so this only nudges the size.
+        internal const val MIN_SIZE = 0.96f
 
         /**
          * Custom interpolator for both the home and wallpaper scaling. Necessary because EMPHASIZED

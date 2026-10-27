@@ -52,6 +52,8 @@ data class FolderAnimationData(
     val contentOffsetY: Int,
     /** default duration */
     val defaultDuration: Int,
+    /** whether the folder is rendered as an inline large-folder card on the workspace */
+    val isInline: Boolean = false,
 ) {
 
     companion object Factory {
@@ -59,6 +61,9 @@ data class FolderAnimationData(
             /** Calculates all values required for Folder Animators. */
             // Position and Scale values
             val layoutParams = layoutParams as BaseDragLayer.LayoutParams
+            if (folderIcon.isInlineActive) {
+                return getInlineAnimationData(isOpening, layoutParams)
+            }
             val previewBackground = folderIcon.mBackground
 
             // Get items in Preview and their scaling
@@ -105,8 +110,11 @@ data class FolderAnimationData(
             val folderRadiusDifference = previewBackground.scaledRadius - previewBackground.radius
             /**
              * Background can have a scaled radius in drag and drop mode, so we need to add the
-             * difference to keep the preview items centered.
+             * difference to keep the preview items centered. The preview items are drawn
+             * relative to the layout area (inset from the background), so add that inset too
+             * to keep the animation aligned with the closed-state draw position.
              */
+            val layoutInset = previewBackground.layoutOffsetX - previewBackground.basePreviewOffsetX
             return FolderAnimationData(
                 isOpening = isOpening,
                 startScale = if (isOpening) initialFolderScale else 1f,
@@ -114,16 +122,62 @@ data class FolderAnimationData(
                 xDistance = (initialX - layoutParams.x).toFloat(),
                 yDistance = (initialY - layoutParams.y).toFloat(),
                 contentHeightDifference = contentHeightDifference,
-                folderRadiusDifference = folderRadiusDifference,
+                folderRadiusDifference = folderRadiusDifference + layoutInset,
                 initialFolderScale = initialFolderScale,
                 initialFolderSize = initialFolderSize,
                 previewOffsetX = initialPreviewItemOffsetX + contentOffsetX,
                 scaledPreviewOffsetX =
                     (initialPreviewItemOffsetX / scaleRelativeToDragLayer).toInt() +
-                        folderRadiusDifference,
+                        folderRadiusDifference + layoutInset,
                 contentOffsetY = contentOffsetY,
                 defaultDuration =
                     content.resources.getInteger(R.integer.config_materialFolderExpandDuration),
+            )
+        }
+
+        /**
+         * Animation data for an inline large folder: the popup grows out of (and shrinks back
+         * into) the large-folder card, instead of the legacy small preview circle.
+         */
+        private fun Folder.getInlineAnimationData(
+            isOpening: Boolean,
+            layoutParams: BaseDragLayer.LayoutParams,
+        ): FolderAnimationData {
+            val cardRect = Rect()
+            val scaleRelativeToDragLayer =
+                mActivityContext.dragLayer.getDescendantRectRelativeToSelf(folderIcon, cardRect)
+            val cardHeight = folderIcon.inlineCardHeightPx * scaleRelativeToDragLayer
+            cardRect.bottom = cardRect.top + Math.round(cardHeight)
+
+            val lpWidth = layoutParams.width.toFloat()
+            val lpHeight = layoutParams.height.toFloat()
+            val fitScale =
+                if (lpWidth > 0f && lpHeight > 0f && cardRect.width() > 0 && cardHeight > 0f) {
+                    Math.min(cardRect.width() / lpWidth, cardHeight / lpHeight)
+                } else {
+                    1f
+                }
+            val xDistance =
+                cardRect.left + (cardRect.width() - lpWidth * fitScale) / 2f - layoutParams.x
+            val yDistance =
+                cardRect.top + (cardHeight - lpHeight * fitScale) / 2f - layoutParams.y
+            val contentHeightDifference = contentAreaHeight * (1f - fitScale)
+            return FolderAnimationData(
+                isOpening = isOpening,
+                startScale = if (isOpening) fitScale else 1f,
+                folderScale = fitScale / scaleRelativeToDragLayer,
+                xDistance = xDistance,
+                yDistance = yDistance,
+                contentHeightDifference = contentHeightDifference,
+                folderRadiusDifference = 0,
+                initialFolderScale = fitScale,
+                initialFolderSize = cardRect.width().toFloat(),
+                previewOffsetX = 0,
+                scaledPreviewOffsetX = 0,
+                contentOffsetY = 0,
+                defaultDuration =
+                    content.resources.getInteger(R.integer.config_materialFolderExpandDuration),
+                isInline = true,
             )
         }
     }

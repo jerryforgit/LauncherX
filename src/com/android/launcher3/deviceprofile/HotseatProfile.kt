@@ -18,8 +18,8 @@ package com.android.launcher3.deviceprofile
 
 import android.content.res.Resources
 import android.graphics.Rect
-import app.lawnchair.hotseat.HotseatMode
-import app.lawnchair.preferences2.PreferenceManager2
+import com.jerry.launcherx.hotseat.HotseatMode
+import com.jerry.launcherx.preferences2.PreferenceManager2
 import com.android.launcher3.InvariantDeviceProfile
 import com.android.launcher3.InvariantDeviceProfile.INDEX_DEFAULT
 import com.android.launcher3.R
@@ -90,16 +90,12 @@ data class HotseatProfile(
                     responsiveHotseatSpec != null -> responsiveHotseatSpec.edgePadding
                     else -> workspacePageIndicatorHeight
                 }
-            val isQsbEnable = hotseatMode.layoutResourceId != R.layout.empty_view
-
             val hotseatBarWorkspaceSpacePx =
                 if (responsiveHotseatSpec != null) 0
                 else res.getDimensionPixelSize(R.dimen.dynamic_grid_hotseat_side_padding)
-            val hotseatQsbHeight =
-                if (isQsbEnable) res.getDimensionPixelSize(R.dimen.qsb_widget_height) else 0
+            val hotseatQsbHeight = res.getDimensionPixelSize(R.dimen.qsb_widget_height)
             val hotseatQsbShadowHeight = res.getDimensionPixelSize(R.dimen.qsb_shadow_height)
-            val hotseatQsbVisualHeight =
-                if (isQsbEnable) hotseatQsbHeight - 2 * hotseatQsbShadowHeight else 0
+            val hotseatQsbVisualHeight = hotseatQsbHeight - 2 * hotseatQsbShadowHeight
 
             return HotseatProfile(
                 areNavButtonsInline = areNavButtonsInline,

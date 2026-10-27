@@ -1,0 +1,23 @@
+package com.jerry.launcherx.qsb.providers
+
+import com.jerry.launcherx.animateToAllApps
+import com.jerry.launcherx.qsb.ThemingMethod
+import com.android.launcher3.Launcher
+import com.android.launcher3.R
+
+data object AppSearch : QsbSearchProvider(
+    id = "app_search",
+    name = R.string.search_provider_app_search,
+    icon = R.drawable.ic_qsb_search,
+    themingMethod = ThemingMethod.TINT,
+    packageName = "",
+    website = "",
+    type = QsbSearchProviderType.LOCAL,
+) {
+    override suspend fun launch(launcher: Launcher, forceWebsite: Boolean) {
+        launcher.animateToAllApps()
+        val searchUiManager = launcher.appsView.searchUiManager
+        searchUiManager.setDirectFocus(true)
+        searchUiManager.editText?.showKeyboard()
+    }
+}

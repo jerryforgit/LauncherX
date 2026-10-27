@@ -51,8 +51,8 @@ import com.google.android.msdl.data.model.MSDLToken;
 import java.util.function.Supplier;
 import java.lang.reflect.InvocationTargetException;
 
-import app.lawnchair.LawnchairAppKt;
-import app.lawnchair.util.CompatibilityKt;
+import com.jerry.launcherx.LauncherXAppKt;
+import com.jerry.launcherx.util.CompatibilityKt;
 
 /**
  * TouchController for handling touch events that get sent to the StatusBar. Once the
@@ -122,7 +122,7 @@ public class StatusBarTouchController implements TouchController {
 
     private void vibrate() {
         // LC-Note: For pulling down on notification panel (default gesture config)
-        if (!LawnchairAppKt.getLawnchairApp(mLauncher).isVibrateOnIconAnimation()) {
+        if (!LauncherXAppKt.getLauncherXApp(mLauncher).isVibrateOnIconAnimation()) {
             if (Flags.msdlFeedback()) {
                 MSDLPlayerWrapper.INSTANCE.get(mLauncher).playToken(MSDLToken.SWIPE_THRESHOLD_INDICATOR);
             } else {
@@ -148,6 +148,14 @@ public class StatusBarTouchController implements TouchController {
         } else if (ev.getActionMasked() == MotionEvent.ACTION_POINTER_DOWN) {
             // Check!! should only set it only when threshold is not entered.
             mDownEvents.put(pid, new PointF(ev.getX(idx), ev.getY(idx)));
+        }
+        // LC: The folder resize frame can appear mid-gesture (long-press on a folder opens
+        // it while the finger is still down). Once it exists, this gesture must never pull
+        // down the notification shade; only a fresh gesture may do so.
+        if (action != ACTION_DOWN && AbstractFloatingView.getTopOpenViewWithType(mLauncher,
+                AbstractFloatingView.TYPE_STATUS_BAR_SWIPE_DOWN_DISALLOW) != null) {
+            mCanIntercept = false;
+            return false;
         }
         if (!mCanIntercept) {
             return false;
@@ -210,7 +218,7 @@ public class StatusBarTouchController implements TouchController {
     }
 
     private boolean canInterceptTouch(MotionEvent ev) {
-        // Lawnchair: Icon Swipe Gestures (For vertical down gestures)
+        // LauncherX: Icon Swipe Gestures (For vertical down gestures)
         if (mLauncher instanceof Launcher launcher) {
             if (launcher.getWorkspace() != null && launcher.getDragLayer() != null) {
                 float[] coord = new float[]{ev.getX(), ev.getY()};

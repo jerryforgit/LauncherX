@@ -53,7 +53,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import androidx.core.content.res.ResourcesCompat;
-import app.lawnchair.DeviceProfileOverrides.TextFactors;
+import com.jerry.launcherx.DeviceProfileOverrides.TextFactors;
 import com.android.launcher3.CellLayout.ContainerType;
 import com.android.launcher3.DevicePaddings.DevicePadding;
 import com.android.launcher3.InvariantDeviceProfile.DisplayOptionSpec;
@@ -88,14 +88,14 @@ import java.io.PrintWriter;
 import java.util.Locale;
 import java.util.function.Consumer;
 
-import app.lawnchair.preferences2.PreferenceCacheExtensionsKt;
-import app.lawnchair.DeviceProfileOverrides;
-import app.lawnchair.LawnchairApp;
-import app.lawnchair.LawnchairAppKt;
-import app.lawnchair.hotseat.HotseatMode;
-import app.lawnchair.preferences.PreferenceManager;
-import app.lawnchair.preferences2.PreferenceManager2;
-import app.lawnchair.theme.color.ColorOption;
+import com.jerry.launcherx.preferences2.PreferenceCacheExtensionsKt;
+import com.jerry.launcherx.DeviceProfileOverrides;
+import com.jerry.launcherx.LauncherXApp;
+import com.jerry.launcherx.LauncherXAppKt;
+import com.jerry.launcherx.hotseat.HotseatMode;
+import com.jerry.launcherx.preferences.PreferenceManager;
+import com.jerry.launcherx.preferences2.PreferenceManager2;
+import com.jerry.launcherx.theme.color.ColorOption;
 
 @SuppressLint("NewApi")
 public class DeviceProfile {
@@ -365,7 +365,7 @@ public class DeviceProfile {
         preferenceManager2 = PreferenceManager2.INSTANCE.get(context);
         allAppsCellHeightMultiplier = PreferenceCacheExtensionsKt
                 .firstCached(preferenceManager2.getDrawerCellHeightFactor());
-        // Lawnchair: clamp the user padding factors to their slider ranges so a restored or
+        // LauncherX: clamp the user padding factors to their slider ranges so a restored or
         // manually edited preference can't feed out-of-range values into the layout math.
         workspacePaddingHorizontalFactor = Utilities.boundToRange(PreferenceCacheExtensionsKt
                 .firstCached(preferenceManager2.getWorkspacePaddingHorizontalFactor()), 0f, 2f);
@@ -551,10 +551,8 @@ public class DeviceProfile {
             hotseatBarBottomSpace = pxFromDp(inv.hotseatBarBottomSpace[mTypeIndex], mMetrics);
         }
 
-        if (!isQsbEnable) {
-            hotseatBarBottomSpace = 0;
-            hotseatQsbSpace = 0;
-        }
+        // LC-Note: when the QSB is turned off we keep the dock spacing/size as if it were
+        // present, so the dock keeps its height instead of collapsing to the screen edge.
 
         hotseatProfile = HotseatProfile.Factory.createHotseatProfile(
                 getDeviceProperties(),
@@ -667,7 +665,7 @@ public class DeviceProfile {
         }
 
         desiredWorkspaceHorizontalMarginPx = getHorizontalMarginPx(inv, res);
-        // Lawnchair: scale the horizontal workspace margin at the source so the cell layout
+        // LauncherX: scale the horizontal workspace margin at the source so the cell layout
         // width calculation uses the scaled value too. Otherwise cells keep their original
         // width and get centered, leaving a visible side gap even at factor 0.
         desiredWorkspaceHorizontalMarginPx =
@@ -720,7 +718,7 @@ public class DeviceProfile {
             allAppsShiftRange =
                     res.getDimensionPixelSize(R.dimen.all_apps_starting_vertical_translate);
         }
-        // Lawnchair: extra user-configurable app drawer top padding. The factor is additive
+        // LauncherX: extra user-configurable app drawer top padding. The factor is additive
         // and slider-ranged 100%-200% (default 100%), so subtract 1f to keep 100% as no change.
         allAppsPadding.top += Math.round(iconSizePx * (drawerPaddingTopFactor - 1f));
         allAppsOpenDuration = res.getInteger(R.integer.config_allAppsOpenDuration);
@@ -789,8 +787,23 @@ public class DeviceProfile {
         boolean canQsbInline = deviceProperties.isTwoPanels() ? twoPanelCanInline : tabletInlineQsb;
         canQsbInline = canQsbInline && hotseatProfile.getQsbHeight() > 0;
 
-        return (isScalableGrid && inv.inlineQsb[mTypeIndex] && canQsbInline)
+        boolean inline = (isScalableGrid && inv.inlineQsb[mTypeIndex] && canQsbInline)
                 || inv.isFixedLandscape;
+
+        // LC-Note: only inline the QSB when the window is actually wide enough to fit a
+        // usable QSB next to the dock icon row. On narrow windows (split screen, small
+        // landscape windows) we fall back to the stacked layout: the search box sits
+        // below the icons, outside the capsule.
+        if (inline) {
+            int hotseatIconSizePx = mIsResponsiveGrid
+                    ? mResponsiveWorkspaceCellSpec.getIconSize()
+                    : pxFromDp(inv.iconSize[mTypeIndex], mMetrics);
+            int minInlineWidthPx = hotseatProfile.getMinQsbWidthPx()
+                    + hotseatIconSizePx * numShownHotseatIcons
+                    + hotseatProfile.getMinIconSpacePx() * (numShownHotseatIcons + 1);
+            inline = deviceProperties.getAvailableWidthPx() >= minInlineWidthPx;
+        }
+        return inline;
     }
 
     private static DotRenderer createDotRenderer(
@@ -806,7 +819,7 @@ public class DeviceProfile {
         return renderer;
     }
 
-    // Lawnchair
+    // LauncherX
     private static DotRenderer createDotRenderer(
         @NonNull ThemeManager themeManager, int size, @NonNull SparseArray<DotRenderer> cache, boolean showNotificationCount, Typeface typeface, int dotColor, int countColor) {
         DotRenderer renderer = cache.get(size);
@@ -924,14 +937,12 @@ public class DeviceProfile {
                     + extraRowsHeight;
         } else if (isQsbOnTop()) { // LC-Note: isQsbOnTop, this usually is a foldable device, not a tablet
             hotseatBarSizePx = hotseatIconSizePx
-                    + hotseatQsbSpace
-                    + getHotseatProfile().getQsbVisualHeight()
+                    + (isQsbEnable ? hotseatQsbSpace + getHotseatProfile().getQsbVisualHeight() : 0)
                     + hotseatBarBottomSpacePx
                     + extraRowsHeight;
         } else {
             hotseatBarSizePx = hotseatIconSizePx
-                    + hotseatQsbSpace
-                    + getHotseatProfile().getQsbVisualHeight()
+                    + (isQsbEnable ? hotseatQsbSpace + getHotseatProfile().getQsbVisualHeight() : 0)
                     + hotseatBarBottomSpacePx
                     + space
                     + extraRowsHeight;
@@ -1231,7 +1242,7 @@ public class DeviceProfile {
         final boolean isVerticalLayout = isVerticalBarLayout();
         cellLayoutBorderSpacePx = getCellLayoutBorderSpace(inv, scale);
 
-        // Lawnchair: Get initial text size before calculating layout
+        // LauncherX: Get initial text size before calculating layout
         // This scales offset with text sizing, all the way down to zero
         iconTextSizePx *= mTextFactors.getIconTextSizeFactor();
 
@@ -1337,9 +1348,33 @@ public class DeviceProfile {
                     + iconDrawablePaddingPx
                     + Utilities.calculateTextHeight(iconTextSizePx);
             maxIconTextLineCount = 1;
-            int cellPaddingY = (getCellSize().y - cellHeightPx) / 2;
-            if (iconDrawablePaddingPx > cellPaddingY && !isVerticalLayout
-                    && !mDeviceProperties.isMultiWindowMode()) {
+
+            // Small/legacy devices can have a cell height that is smaller than the profile's
+            // default icon + label. Never let the drawable padding become negative (it made the
+            // label overlap the icon) and cap the icon to the height left by the label.
+            int textHeight = Utilities.calculateTextHeight(iconTextSizePx);
+            int availableHeight = getCellSize().y;
+            if (iconDrawablePaddingPx < 0) {
+                iconDrawablePaddingPx = 0;
+            }
+            int minGap = Math.max(pxFromDp(2, mMetrics),
+                    Math.min(iconDrawablePaddingPx, pxFromDp(8, mMetrics)));
+            int baseIconSizePx = Math.max(1, pxFromDp(inv.iconSize[mTypeIndex], mMetrics));
+            // Keep a usable icon size on small screens; the provisional cell height used here
+            // can be smaller than the final cell height (workspace padding is applied later).
+            int minIconSizePx = Math.min(baseIconSizePx, pxFromDp(48, mMetrics));
+            int maxIconSizePx = availableHeight - textHeight - minGap;
+            if (maxIconSizePx > 0) {
+                iconSizePx = Math.min(baseIconSizePx, Math.max(minIconSizePx, maxIconSizePx));
+                iconDrawablePaddingPx = Math.min(iconDrawablePaddingPx, minGap);
+            }
+            cellWidthPx = iconSizePx + iconDrawablePaddingPx;
+            cellHeightPx = getIconSizeWithOverlap(iconSizePx)
+                    + iconDrawablePaddingPx + textHeight;
+
+            int cellPaddingY = Math.max(0, (availableHeight - cellHeightPx) / 2);
+            if (cellPaddingY > 0 && iconDrawablePaddingPx > cellPaddingY
+                    && !isVerticalLayout && !mDeviceProperties.isMultiWindowMode()) {
                 // Ensures that the label is closer to its corresponding icon. This is not an issue
                 // with vertical bar layout or multi-window mode since the issue is handled
                 // separately with their calls to {@link #adjustToHideWorkspaceLabels}.
@@ -1404,7 +1439,7 @@ public class DeviceProfile {
         } else {
             widgetPadding.setEmpty();
         }
-        // Lawnchair: scale widget padding by user factor (0 = remove, 1 = default).
+        // LauncherX: scale widget padding by user factor (0 = remove, 1 = default).
         widgetPadding.left = Math.round(widgetPadding.left * widgetPaddingFactor);
         widgetPadding.right = Math.round(widgetPadding.right * widgetPaddingFactor);
         widgetPadding.top = Math.round(widgetPadding.top * widgetPaddingFactor);
@@ -1778,7 +1813,7 @@ public class DeviceProfile {
                 paddingRight = isSeascape() ? 0 : desiredWorkspaceHorizontalMarginPx;
             }
 
-            // Lawnchair: scale vertical workspace padding by user factor.
+            // LauncherX: scale vertical workspace padding by user factor.
             // (Horizontal is applied at the source margin so the cells fill the freed space.)
             // The dock (hotseatBarSizePx) reservation in the bottom padding must be preserved,
             // otherwise reducing the factor pulls the last row into the dock and clips it.

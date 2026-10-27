@@ -62,12 +62,12 @@
             android:resource="@array/preloaded_fonts" />
 
         <activity
-            android:name="app.lawnchair.ui.preferences.PreferenceActivity"
+            android:name="com.jerry.launcherx.ui.preferences.PreferenceActivity"
             android:autoRemoveFromRecents="true"
             android:exported="true"
             android:label="@string/settings_button_text"
             android:icon="@mipmap/ic_settings"
-            android:theme="@style/Theme.Lawnchair"
+            android:theme="@style/Theme.LauncherX"
             android:windowSoftInputMode="adjustResize"
             android:enableOnBackInvokedCallback="true">
             <intent-filter android:priority="1">
@@ -86,9 +86,9 @@
         <activity
             android:label="@string/lawnchair_actions"
             android:icon="@mipmap/ic_launcher_home"
-            android:name="app.lawnchair.gestures.ui.LawnchairShortcutActivity"
+            android:name="com.jerry.launcherx.gestures.ui.LauncherXShortcutActivity"
             android:exported="true"
-            android:theme="@style/Theme.Lawnchair">
+            android:theme="@style/Theme.LauncherX">
             <intent-filter>
                 <action android:name="android.intent.action.CREATE_SHORTCUT" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -96,11 +96,11 @@
         </activity>
 
         <activity
-            android:name="app.lawnchair.gestures.ui.RunHandlerActivity"
+            android:name="com.jerry.launcherx.gestures.ui.RunHandlerActivity"
             android:exported="true"
-            android:theme="@style/Theme.Lawnchair">
+            android:theme="@style/Theme.LauncherX">
             <intent-filter>
-                <action android:name="app.lawnchair.START_ACTION" />
+                <action android:name="com.jerry.launcherx.START_ACTION" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
@@ -111,25 +111,25 @@
             tools:node="remove" />
 
         <activity
-            android:name="app.lawnchair.ui.ApplyIconPackActivity"
+            android:name="com.jerry.launcherx.ui.ApplyIconPackActivity"
             android:exported="true"
             android:theme="@style/Theme.Transparent">
             <intent-filter>
-                <action android:name="app.lawnchair.APPLY_ICONS" />
+                <action android:name="com.jerry.launcherx.APPLY_ICONS" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
 
         <activity
-            android:name="app.lawnchair.BlankActivity"
+            android:name="com.jerry.launcherx.BlankActivity"
             android:theme="@style/Theme.Transparent" />
 
         <activity
-            android:name="app.lawnchair.smartspace.SmartspacePreferencesShortcut"
+            android:name="com.jerry.launcherx.smartspace.SmartspacePreferencesShortcut"
             android:theme="@style/Theme.Transparent" />
 
         <receiver
-            android:name="app.lawnchair.gestures.handlers.SleepMethodDeviceAdmin$SleepDeviceAdmin"
+            android:name="com.jerry.launcherx.gestures.handlers.SleepMethodDeviceAdmin$SleepDeviceAdmin"
             android:description="@string/dt2s_admin_hint"
             android:exported="true"
             android:label="@string/derived_app_name"
@@ -143,7 +143,7 @@
         </receiver>
 
         <service
-            android:name="app.lawnchair.LawnchairAccessibilityService"
+            android:name="com.jerry.launcherx.LauncherXAccessibilityService"
             android:exported="false"
             android:label="@string/derived_app_name"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
@@ -156,7 +156,7 @@
         </service>
 
         <provider
-            android:name="app.lawnchair.bugreport.FileProvider"
+            android:name="com.jerry.launcherx.bugreport.FileProvider"
             android:authorities="${applicationId}.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
@@ -166,13 +166,13 @@
         </provider>
 
         <provider
-            android:name="app.lawnchair.search.LawnchairRecentSuggestionProvider"
-            android:authorities="${applicationId}.search.LawnchairRecentSuggestionProvider"
+            android:name="com.jerry.launcherx.search.LauncherXRecentSuggestionProvider"
+            android:authorities="${applicationId}.search.LauncherXRecentSuggestionProvider"
             android:syncable="true"
             android:exported="false" />
 
         <receiver
-            android:name="app.lawnchair.bugreport.BugReportReceiver"
+            android:name="com.jerry.launcherx.bugreport.BugReportReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="${applicationId}.bugreport.COPY" />
@@ -182,14 +182,14 @@
         </receiver>
 
         <service
-            android:name="app.lawnchair.bugreport.UploaderService"
+            android:name="com.jerry.launcherx.bugreport.UploaderService"
             android:enabled="true"
             android:exported="false"
             android:process=":bugReport"
             android:foregroundServiceType="dataSync" />
 
         <receiver
-            android:name="app.lawnchair.smartspace.SmartspaceAppWidgetProvider"
+            android:name="com.jerry.launcherx.smartspace.SmartspaceAppWidgetProvider"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -197,6 +197,18 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/smartspace_appwidget_info" />
+        </receiver>
+
+        <receiver
+            android:name="com.jerry.launcherx.widget.LaunchpadWidgetProvider"
+            android:exported="true"
+            android:label="@string/launchpad_widget_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/launchpad_widget_info" />
         </receiver>
 
         <meta-data

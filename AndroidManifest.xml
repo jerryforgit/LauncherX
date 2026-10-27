@@ -33,12 +33,11 @@
         android:protectionLevel="signature|privileged" />
 
     <application
-        android:name="app.lawnchair.LawnchairApp"
+        android:name="com.jerry.launcherx.LauncherXApp"
         android:backupAgent="com.android.launcher3.LauncherBackupAgent"
         android:fullBackupOnly="true"
         android:fullBackupContent="@xml/backupscheme"
         android:hardwareAccelerated="true"
-        android:debuggable="true"
         android:icon="@drawable/ic_launcher_home"
         android:label="@string/derived_app_name"
         android:theme="@style/AppTheme"
@@ -51,7 +50,7 @@
         attributes and intent filters the same
         -->
         <activity
-            android:name="app.lawnchair.LawnchairLauncher"
+            android:name="com.jerry.launcherx.LauncherXLauncher"
             android:launchMode="singleTask"
             android:clearTaskOnLaunch="true"
             android:stateNotNeeded="true"

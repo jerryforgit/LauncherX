@@ -105,4 +105,7 @@
     <color name="surface_variant_light">@color/system_neutral2_100</color>
 
     <color name="accent_primary_device_default">@color/system_accent1_100</color>
+
+    <color name="launchpad_widget_bg">#F2FFFFFF</color>
+    <color name="launchpad_widget_icon_tint">#FF1B1B1B</color>
 </resources>

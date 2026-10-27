@@ -16,8 +16,8 @@
 
 package com.android.launcher3.util;
 
-import static app.lawnchair.wallpaper.WallpaperColorsCompat.HINT_SUPPORTS_DARK_TEXT;
-import static app.lawnchair.wallpaper.WallpaperColorsCompat.HINT_SUPPORTS_DARK_THEME;
+import static com.jerry.launcherx.wallpaper.WallpaperColorsCompat.HINT_SUPPORTS_DARK_TEXT;
+import static com.jerry.launcherx.wallpaper.WallpaperColorsCompat.HINT_SUPPORTS_DARK_THEME;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -36,14 +36,14 @@ import com.android.launcher3.Utilities;
 import com.android.launcher3.icons.GraphicsUtils;
 import com.android.launcher3.views.ActivityContext;
 
-import app.lawnchair.preferences2.PreferenceCacheExtensionsKt;
-import app.lawnchair.preferences.PreferenceManager;
-import app.lawnchair.preferences2.PreferenceManager2;
-import app.lawnchair.theme.color.ColorMode;
-import app.lawnchair.theme.color.tokens.ColorTokens;
-import app.lawnchair.wallpaper.WallpaperColorsCompat;
-import app.lawnchair.wallpaper.WallpaperManagerCompat;
-import app.lawnchair.ui.theme.ColorKt;
+import com.jerry.launcherx.preferences2.PreferenceCacheExtensionsKt;
+import com.jerry.launcherx.preferences.PreferenceManager;
+import com.jerry.launcherx.preferences2.PreferenceManager2;
+import com.jerry.launcherx.theme.color.ColorMode;
+import com.jerry.launcherx.theme.color.tokens.ColorTokens;
+import com.jerry.launcherx.wallpaper.WallpaperColorsCompat;
+import com.jerry.launcherx.wallpaper.WallpaperManagerCompat;
+import com.jerry.launcherx.ui.theme.ColorKt;
 
 /**
  * Various utility methods associated with theming.

@@ -173,7 +173,7 @@ data class PathShapeDelegate(val iconShape: IconShape) : ShapeDelegate {
             target.apply {
                 oldOutlineProvider = outlineProvider
                 outlineProvider = null
-                translationZ = -target.elevation
+                translationZ = if (target is com.android.launcher3.folder.Folder) 0f else -target.elevation
             }
         }
 
@@ -222,7 +222,7 @@ data class PathShapeDelegate(val iconShape: IconShape) : ShapeDelegate {
             target.apply {
                 oldOutlineProvider = outlineProvider
                 outlineProvider = null
-                translationZ = -target.elevation
+                translationZ = if (target is com.android.launcher3.folder.Folder) 0f else -target.elevation
             }
         }
 

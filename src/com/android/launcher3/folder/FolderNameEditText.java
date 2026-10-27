@@ -27,11 +27,11 @@ import android.view.inputmethod.InputConnectionWrapper;
 import android.view.inputmethod.InputMethodManager;
 
 import com.android.launcher3.ExtendedEditText;
-import app.lawnchair.preferences2.PreferenceCacheExtensionsKt;
+import com.jerry.launcherx.preferences2.PreferenceCacheExtensionsKt;
 
 import java.util.List;
 
-import app.lawnchair.preferences2.PreferenceManager2;
+import com.jerry.launcherx.preferences2.PreferenceManager2;
 
 /**
  * Handles additional edit text functionality to better support folder name suggestion.

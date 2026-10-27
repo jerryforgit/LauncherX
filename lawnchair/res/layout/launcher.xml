@@ -59,7 +59,7 @@
             android:layout_gravity="bottom|center_horizontal"
             android:theme="@style/HomeScreenElementTheme" />
 
-        <app.lawnchair.views.EditModePageStrip
+        <com.jerry.launcherx.views.EditModePageStrip
             android:id="@+id/edit_mode_page_strip"
             android:layout_width="match_parent"
             android:layout_height="@dimen/edit_mode_page_strip_height"
@@ -70,11 +70,27 @@
             android:paddingBottom="12dp"
             android:visibility="gone" />
 
+        <com.jerry.launcherx.views.EditModeActionBar
+            android:id="@+id/edit_mode_action_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center_horizontal"
+            android:layout_marginBottom="@dimen/edit_mode_page_strip_height"
+            android:visibility="gone" />
+
+        <com.jerry.launcherx.views.EditModeSelectionBar
+            android:id="@+id/edit_mode_selection_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center_horizontal"
+            android:layout_marginBottom="@dimen/edit_mode_page_strip_height"
+            android:visibility="gone" />
+
         <include
             android:id="@+id/drop_target_bar"
             layout="@layout/drop_target_bar" />
 
-        <app.lawnchair.views.LawnchairScrimView
+        <com.jerry.launcherx.views.LauncherXScrimView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:id="@+id/scrim_view"

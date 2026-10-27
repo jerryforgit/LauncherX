@@ -96,6 +96,33 @@ class DropTargetHandler(launcher: Launcher) {
         )
     }
 
+    /**
+     * LauncherX: removes several workspace items at once, sharing a single undo snackbar.
+     */
+    fun removeItems(items: List<ItemInfo>) {
+        if (items.isEmpty()) return
+        prepareToUndoDelete()
+        val pageIds = IntSet()
+        for (item in items) {
+            removeItemAndStripEmptyScreens(mLauncher.workspace.getViewByItemId(item.id), item)
+            if (item.container == LauncherSettings.Favorites.CONTAINER_DESKTOP) {
+                pageIds.add(item.screenId)
+            }
+        }
+        val onUndoClicked = Runnable {
+            mLauncher.setPagesToBindSynchronously(pageIds)
+            mLauncher.modelWriter.abortDelete()
+            mLauncher.statsLogManager.logger().log(LauncherEvent.LAUNCHER_UNDO)
+        }
+        Snackbar.show(
+            mLauncher,
+            R.string.item_removed,
+            R.string.undo,
+            mLauncher.modelWriter::commitDelete,
+            onUndoClicked,
+        )
+    }
+
     fun onAccessibilityDelete(view: View?, item: ItemInfo, announcement: CharSequence) {
         removeItemAndStripEmptyScreens(view, item)
         mLauncher.dragLayer.announceForAccessibility(announcement)

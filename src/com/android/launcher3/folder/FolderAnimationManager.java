@@ -54,7 +54,7 @@ import com.android.launcher3.views.BaseDragLayer;
 
 import java.util.List;
 
-import app.lawnchair.util.LawnchairUtilsKt;
+import com.jerry.launcherx.util.LauncherXUtilsKt;
 
 /**
  * Manages the opening and closing animations for a {@link Folder}.
@@ -187,9 +187,9 @@ public class FolderAnimationManager implements FolderAnimationCreator {
         final float xDistance = initialX - lp.x;
         final float yDistance = initialY - lp.y;
 
-        // Set up the Folder background (respects Lawnchair folder color pref).
-        int initialColor = LawnchairUtilsKt.resolveFolderPreviewColor(mContext);
-        int finalColor = LawnchairUtilsKt.resolveFolderBackgroundColor(mContext);
+        // Set up the Folder background (respects LauncherX folder color pref).
+        int initialColor = LauncherXUtilsKt.resolveFolderPreviewColor(mContext);
+        int finalColor = LauncherXUtilsKt.resolveFolderBackgroundColor(mContext);
 
         mFolderBackground.mutate();
         mFolderBackground.setColor(mIsOpening ? initialColor : finalColor);
@@ -280,7 +280,7 @@ public class FolderAnimationManager implements FolderAnimationCreator {
 
         // Animate the elevation midway so that the shadow is not noticeable in the background.
         int midDuration = mDuration / 2;
-        Animator z = getAnimator(mFolder, View.TRANSLATION_Z, -mFolder.getElevation(), 0);
+        Animator z = getAnimator(mFolder, View.TRANSLATION_Z, 0f, 0f);
         play(a, z, mIsOpening ? midDuration : 0, midDuration);
 
         // Store clip variables.
@@ -350,7 +350,10 @@ public class FolderAnimationManager implements FolderAnimationCreator {
             );
         }
 
-        int radiusDiff = scaledRadius - mPreviewBackground.getRadius();
+        // The preview items are drawn relative to the layout area (inset from the
+        // background); keep the animation's start positions aligned with that draw offset.
+        int radiusDiff = scaledRadius - mPreviewBackground.getRadius()
+                + (mPreviewBackground.layoutOffsetX - mPreviewBackground.basePreviewOffsetX);
         addPreviewItemAnimators(a, initialScale / scaleRelativeToDragLayer,
                 // Background can have a scaled radius in drag and drop mode, so we need to add the
                 // difference to keep the preview items centered.

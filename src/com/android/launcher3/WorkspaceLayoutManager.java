@@ -27,8 +27,8 @@ import com.android.launcher3.folder.FolderIcon;
 import com.android.launcher3.model.data.ItemInfo;
 import com.android.launcher3.touch.ItemLongClickListener;
 
-import app.lawnchair.preferences2.PreferenceManager2;
-import app.lawnchair.preferences2.PreferenceCacheExtensionsKt;
+import com.jerry.launcherx.preferences2.PreferenceManager2;
+import com.jerry.launcherx.preferences2.PreferenceCacheExtensionsKt;
 import com.android.launcher3.util.IntSet;
 
 public interface WorkspaceLayoutManager {
@@ -66,6 +66,9 @@ public interface WorkspaceLayoutManager {
                     + " and y = " + y + " page = " + screenId);
         }
         addInScreen(child, info.container, screenId, x, y, info.spanX, info.spanY);
+        if (info.container == LauncherSettings.Favorites.CONTAINER_HOTSEAT
+                || info.container == LauncherSettings.Favorites.CONTAINER_HOTSEAT_PREDICTION) {
+        }
     }
 
     /**
@@ -126,9 +129,21 @@ public interface WorkspaceLayoutManager {
                                 prefs.getEnableLabelInDock()));
             }
         } else {
-            // Show folder title if not in the hotseat
+            // Show folder title if not in the hotseat, unless the user opted out
+            // via the small-folder desktop-label toggle. Large folders have their
+            // own toggle handled inside FolderIcon.setTextVisible().
             if (child instanceof FolderIcon) {
-                ((FolderIcon) child).setTextVisible(true);
+                FolderIcon folderIcon = (FolderIcon) child;
+                if (folderIcon.isInlineActive()) {
+                    // Large folder: setTextVisible respects its own pref.
+                    folderIcon.setTextVisible(true);
+                } else {
+                    PreferenceManager2 prefs =
+                            PreferenceManager2.getInstance(child.getContext());
+                    boolean showLabel = PreferenceCacheExtensionsKt.firstCached(
+                            prefs.getShowFolderDesktopLabel());
+                    folderIcon.setTextVisible(showLabel);
+                }
             }
             layout = getScreenWithId(screenId);
         }

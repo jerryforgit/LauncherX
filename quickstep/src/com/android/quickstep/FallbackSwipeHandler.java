@@ -83,7 +83,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-import app.lawnchair.compat.LawnchairQuickstepCompat;
+import com.jerry.launcherx.compat.LauncherXQuickstepCompat;
 
 /**
  * Handles the navigation gestures when a 3rd party launcher is the default home activity.
@@ -92,6 +92,12 @@ public class FallbackSwipeHandler extends
         AbsSwipeUpHandler<RecentsActivity, FallbackRecentsView<RecentsActivity>, RecentsState> {
 
     private static final String TAG = "FallbackSwipeHandler";
+
+    /**
+     * Going to overview only nudges the desktop instead of shrinking it down to the size of a
+     * task card, which reads as the home screen being pushed far back.
+     */
+    private static final float MIN_HOME_SCALE = 0.96f;
 
     /**
      * Message used for receiving gesture nav contract information. We use a static messenger to
@@ -105,7 +111,6 @@ public class FallbackSwipeHandler extends
 
     private final Matrix mTmpMatrix = new Matrix();
     private float mMaxLauncherScale = 1;
-
     private boolean mAppCanEnterPip;
 
     public FallbackSwipeHandler(Context context, TaskAnimationManager taskAnimationManager,
@@ -144,6 +149,7 @@ public class FallbackSwipeHandler extends
     private void setHomeScaleAndAlpha(SurfaceProperties builder,
             RemoteAnimationTarget app, float verticalShift, float alpha) {
         float scale = Utilities.mapRange(verticalShift, 1, mMaxLauncherScale);
+        scale = Math.max(scale, MIN_HOME_SCALE);
         mTmpMatrix.setScale(scale, scale,
                 app.localBounds.exactCenterX(), app.localBounds.exactCenterY());
         builder.setMatrix(mTmpMatrix).setAlpha(alpha);

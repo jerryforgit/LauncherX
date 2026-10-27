@@ -46,8 +46,8 @@ import com.android.launcher3.widget.util.WidgetsTableUtils;
 
 import java.util.List;
 
-import app.lawnchair.font.FontManager;
-import app.lawnchair.theme.drawable.DrawableTokens;
+import com.jerry.launcherx.font.FontManager;
+import com.jerry.launcherx.theme.drawable.DrawableTokens;
 
 /**
  * Bottom sheet for the "Widgets" system shortcut in the long-press popup.

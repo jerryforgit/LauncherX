@@ -37,6 +37,7 @@ import android.animation.ValueAnimator;
 import android.view.InputDevice;
 import android.view.MotionEvent;
 
+import com.android.launcher3.AbstractFloatingView;
 import com.android.launcher3.Launcher;
 import com.android.launcher3.LauncherAnimUtils;
 import com.android.launcher3.LauncherState;
@@ -122,6 +123,21 @@ public abstract class AbstractStateChangeTouchController
             }
             mDetector.setDetectableScrollConditions(
                     directionsToDetectScroll, ignoreSlopWhenSettling);
+        }
+
+        // LC: A floating view (e.g. the folder resize frame) or a drag can appear
+        // mid-gesture after this controller already passed its DOWN-time check. Never
+        // start a state swipe then — it would yank open the app drawer / overview while
+        // the user is still interacting with the folder.
+        if (ev.getAction() != MotionEvent.ACTION_DOWN
+                && (AbstractFloatingView.getTopOpenViewWithType(mLauncher,
+                        AbstractFloatingView.TYPE_TOUCH_CONTROLLER_NO_INTERCEPT) != null
+                || mLauncher.getDragController().isDragging())) {
+            if (mDetector.isDraggingOrSettling()) {
+                mDetector.finishedScrolling();
+            }
+            mNoIntercept = true;
+            return false;
         }
 
         if (mNoIntercept) {

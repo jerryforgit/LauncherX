@@ -80,11 +80,23 @@ data class IconAnimationData(
                 val iconScale = previewIconSize / baseIconSize
 
                 // Scale when folder closed
-                val initialIconScale = iconScale / folderAnimationData.folderScale
+                val initialIconScale =
+                    if (folderAnimationData.isInline) {
+                        1f
+                    } else {
+                        iconScale / folderAnimationData.folderScale
+                    }
                 // Scale when folder open
                 val finalIconScale = 1f
                 // Scale to start with in Animation
-                val startScale = if (isOpening) initialIconScale else finalIconScale
+                val startScale =
+                    if (folderAnimationData.isInline) {
+                        1f
+                    } else if (isOpening) {
+                        initialIconScale
+                    } else {
+                        finalIconScale
+                    }
                 currentIcon.scaleX = startScale
                 currentIcon.scaleY = startScale
 
@@ -113,8 +125,18 @@ data class IconAnimationData(
                     ((mTmpParams.transY + folderAnimationData.folderRadiusDifference - paddingTop) /
                             folderAnimationData.folderScale)
                         .toInt()
-                val xDistance = (iconPositionX - iconLayoutParams.x).toFloat()
-                val yDistance = (iconPositionY - iconLayoutParams.y).toFloat()
+                val xDistance =
+                    if (folderAnimationData.isInline) {
+                        0f
+                    } else {
+                        (iconPositionX - iconLayoutParams.x).toFloat()
+                    }
+                val yDistance =
+                    if (folderAnimationData.isInline) {
+                        0f
+                    } else {
+                        (iconPositionY - iconLayoutParams.y).toFloat()
+                    }
 
                 iconDataList.add(
                     IconAnimationData(

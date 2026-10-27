@@ -110,13 +110,13 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Objects;
 
-import app.lawnchair.preferences2.PreferenceCacheExtensionsKt;
-import app.lawnchair.font.FontManager;
-import app.lawnchair.gestures.IconGestureListener;
-import app.lawnchair.preferences.PreferenceManager;
-import app.lawnchair.preferences2.PreferenceManager2;
-import app.lawnchair.util.LawnchairUtilsKt;
-import app.lawnchair.animation.PhysicsAnimator;
+import com.jerry.launcherx.preferences2.PreferenceCacheExtensionsKt;
+import com.jerry.launcherx.font.FontManager;
+import com.jerry.launcherx.gestures.IconGestureListener;
+import com.jerry.launcherx.preferences.PreferenceManager;
+import com.jerry.launcherx.preferences2.PreferenceManager2;
+import com.jerry.launcherx.util.LauncherXUtilsKt;
+import com.jerry.launcherx.animation.PhysicsAnimator;
 
 /**
  * TextView that draws a bubble behind the text. We cannot use a LineBackgroundSpan
@@ -217,6 +217,16 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver,
     private Animator mDotScaleAnim;
     private boolean mForceHideDot;
 
+    // LauncherX: edit-mode "remove" badge drawn on workspace icons.
+    private final RectF mRemoveBadgeBounds = new RectF();
+    private boolean mRemoveBadgePressed;
+
+    // LauncherX: edit-mode multi-select check mark drawn on selected icons.
+    private final RectF mSelectionBadgeBounds = new RectF();
+
+    // LauncherX: explicit icon bounds for inline large-folder cells (see setIconBoundsOverride).
+    private @Nullable Rect mIconBoundsOverride;
+
     // These fields, related to showing running apps, are only used for Taskbar.
     private final int mRunningAppIndicatorHeight;
     private final int mRunningAppIndicatorTopMargin;
@@ -254,7 +264,7 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver,
 
     private final PreferenceManager2 pref2;
     private IconGestureListener mGestureListener;
-    private boolean mShouldHandleIconSwipeTouch; // Lawnchair: Icon swipe gesture feature
+    private boolean mShouldHandleIconSwipeTouch; // LauncherX: Icon swipe gesture feature
 
     public BubbleTextView(Context context) {
         this(context, null, 0);
@@ -294,7 +304,7 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver,
             setCompoundDrawablePadding(
                     mDeviceProfile.getAllAppsProfile().getIconDrawablePaddingPx());
             defaultIconSize = mDeviceProfile.getAllAppsProfile().getIconSizePx();
-            LawnchairUtilsKt.overrideAllAppsTextColor(this);
+            LauncherXUtilsKt.overrideAllAppsTextColor(this);
         } else if (mDisplay == DISPLAY_FOLDER) {
             setTextSize(TypedValue.COMPLEX_UNIT_PX, mDeviceProfile.folderChildTextSizePx);
             setCompoundDrawablePadding(mDeviceProfile.folderChildDrawablePaddingPx);
@@ -381,7 +391,7 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver,
         setMaxLines(1);
         setVisibility(VISIBLE);
 
-        // Lawnchair: Icon swipe gesture feature
+        // LauncherX: Icon swipe gesture feature
         mGestureListener = null;
         mShouldHandleIconSwipeTouch = false;
     }
@@ -503,7 +513,7 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver,
 
     protected void setItemInfo(ItemInfoWithIcon itemInfo) {
         setTag(itemInfo);
-        // Lawnchair: Icon swipe gesture feature
+        // LauncherX: Icon swipe gesture feature
         mGestureListener = shouldSupportIconSwipeGestures()
                 ? new IconGestureListener(this, pref2, itemInfo.getComponentKey())
                 : null;
@@ -692,12 +702,16 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver,
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        // LauncherX: tapping the edit-mode remove badge deletes the item.
+        if (handleRemoveBadgeTouchEvent(event)) {
+            return true;
+        }
         // ignore events if they happen in padding area
         if (event.getAction() == MotionEvent.ACTION_DOWN
                 && shouldIgnoreTouchDown(event.getX(), event.getY())) {
             return false;
         }
-        // Lawnchair: Icon swipe gesture feature
+        // LauncherX: Icon swipe gesture feature
         if (handleIconSwipeTouchEvent(event)) {
             return true;
         }
@@ -709,6 +723,48 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver,
         } else {
             return super.onTouchEvent(event);
         }
+    }
+
+    /**
+     * LauncherX: handles touches on the edit-mode remove badge.
+     *
+     * @return true if the event was consumed.
+     */
+    private boolean handleRemoveBadgeTouchEvent(MotionEvent event) {
+        final int action = event.getActionMasked();
+        if (action == MotionEvent.ACTION_DOWN) {
+            if (shouldShowRemoveBadge()) {
+                Rect iconBounds = new Rect();
+                getIconBounds(iconBounds);
+                updateRemoveBadgeBounds(iconBounds);
+                mRemoveBadgePressed = mRemoveBadgeBounds.contains(event.getX(), event.getY());
+            } else {
+                mRemoveBadgePressed = false;
+            }
+            return mRemoveBadgePressed;
+        }
+        if (!mRemoveBadgePressed) {
+            return false;
+        }
+        if (action == MotionEvent.ACTION_UP) {
+            mRemoveBadgePressed = false;
+            removeItemForRemoveBadge();
+            return true;
+        }
+        if (action == MotionEvent.ACTION_CANCEL) {
+            mRemoveBadgePressed = false;
+        }
+        return true;
+    }
+
+    /**
+     * LauncherX: removes the item backing this view, matching the pop-up "Remove" action.
+     */
+    private void removeItemForRemoveBadge() {
+        if (!(getTag() instanceof ItemInfo itemInfo)) {
+            return;
+        }
+        EditModeRemoveBadge.removeItem(mActivity, itemInfo, this);
     }
 
     /**
@@ -725,7 +781,7 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver,
                 || x > getWidth() - getPaddingRight();
     }
 
-    /** Lawnchair: Handle icon swipe gesture feature, self-explanatory. 
+    /** LauncherX: Handle icon swipe gesture feature, self-explanatory. 
      * Only do horizontal gesture at the moment
      * @param event The type of MotionEvent to handle */
     private boolean handleIconSwipeTouchEvent(MotionEvent event) {
@@ -765,20 +821,20 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver,
         return false;
     }
 
-    /** Lawnchair: Check eligibility for icon swipe gesture to be greenlit */
+    /** LauncherX: Check eligibility for icon swipe gesture to be greenlit */
     private boolean isIconSwipeGestureEnabledForCurrentState() {
         return !(mActivity instanceof Launcher launcher 
             && launcher.isInState(LauncherState.EDIT_MODE));
     }
 
-    /** Lawnchair: Check if icon swipe feature is enabled, and has a gesture configured for it */
+    /** LauncherX: Check if icon swipe feature is enabled, and has a gesture configured for it */
     public boolean hasConfiguredIconSwipeGesture() {
         return mGestureListener != null
                 && isIconSwipeGestureEnabledForCurrentState()
                 && mGestureListener.hasAnyGestureConfigured();
     }
 
-    /** Lawnchair: Check if icon swipe feature is enabled, 
+    /** LauncherX: Check if icon swipe feature is enabled, 
      * and has a horizontal gesture configured for it */
     public boolean hasConfiguredHorizontalIconSwipeGesture() {
         return mGestureListener != null
@@ -786,7 +842,7 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver,
                 && mGestureListener.hasHorizontalGestureConfigured();
     }
 
-    /** Lawnchair: Check if icon swipe feature is enabled, 
+    /** LauncherX: Check if icon swipe feature is enabled, 
      * and has a vertical gesture configured for it */
     public boolean hasConfiguredVerticalIconSwipeGesture() {
         return mGestureListener != null
@@ -794,7 +850,7 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver,
             && mGestureListener.hasVerticalGestureConfigured();
     }
 
-    /** Lawnchair: Get supported swipe target which are within workspace or within folder */
+    /** LauncherX: Get supported swipe target which are within workspace or within folder */
     private boolean shouldSupportIconSwipeGestures() {
         return mDisplay == DISPLAY_WORKSPACE || mDisplay == DISPLAY_FOLDER;
     }
@@ -922,8 +978,77 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver,
     @Override
     public void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        drawRemoveBadgeIfNecessary(canvas);
+        drawSelectionIfNecessary(canvas);
         drawDotIfNecessary(canvas);
         drawRunningAppIndicatorIfNecessary(canvas);
+    }
+
+    /**
+     * LauncherX: enables or disables the edit-mode remove badge for all icons.
+     */
+    public static void setEditModeRemoveBadgeEnabled(boolean enabled) {
+        EditModeRemoveBadge.setEnabled(enabled);
+    }
+
+    /**
+     * LauncherX: whether the edit-mode remove badge should be shown for this icon.
+     *
+     * <p>Only actual, launchable icons get a badge; plain text labels (which some layouts
+     * realise as a {@code BubbleTextView} with no icon drawable) and views that are not backed
+     * by an {@link ItemInfo} are skipped.
+     */
+    private boolean shouldShowRemoveBadge() {
+        if (getIcon() == null || !(getTag() instanceof ItemInfo)) {
+            return false;
+        }
+        // LauncherX: while multi-select is on the remove badge is replaced by the selection box,
+        // so the two overlays never overlap on the same corner.
+        if (EditModeSelectionBadge.shouldShow(mActivity, mDisplay)) {
+            return false;
+        }
+        return EditModeRemoveBadge.shouldShow(mActivity, mDisplay);
+    }
+
+    /** LauncherX: computes the bounds of the remove badge in view coordinates. */
+    private void updateRemoveBadgeBounds(Rect iconBounds) {
+        EditModeRemoveBadge.computeBounds(
+                iconBounds, mRemoveBadgeBounds, getResources().getDisplayMetrics().density);
+    }
+
+    /**
+     * LauncherX: draws the "remove" badge in the top-left corner of the icon while editing.
+     */
+    protected void drawRemoveBadgeIfNecessary(Canvas canvas) {
+        if (!shouldShowRemoveBadge()) {
+            return;
+        }
+        Rect iconBounds = new Rect();
+        getIconBounds(iconBounds);
+        updateRemoveBadgeBounds(iconBounds);
+        EditModeRemoveBadge.draw(canvas, mRemoveBadgeBounds);
+    }
+
+    /**
+     * LauncherX: draws the multi-select affordance in the top-left corner of an icon in edit
+     * mode: an empty "to be selected" box when unselected, a check mark when selected.
+     */
+    protected void drawSelectionIfNecessary(Canvas canvas) {
+        if (getIcon() == null || !(getTag() instanceof ItemInfo itemInfo)) {
+            return;
+        }
+        if (!EditModeSelectionBadge.shouldShow(mActivity, mDisplay)) {
+            return;
+        }
+        Rect iconBounds = new Rect();
+        getIconBounds(iconBounds);
+        EditModeSelectionBadge.computeBounds(
+                iconBounds, mSelectionBadgeBounds, getResources().getDisplayMetrics().density);
+        if (EditModeSelectionBadge.isSelected(mActivity, itemInfo)) {
+            EditModeSelectionBadge.draw(canvas, mSelectionBadgeBounds);
+        } else {
+            EditModeSelectionBadge.drawUnselected(canvas, mSelectionBadgeBounds);
+        }
     }
 
     /**
@@ -1039,6 +1164,10 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver,
      * Get the icon bounds on the view depending on the layout type.
      */
     public void getIconBounds(int iconSize, Rect outBounds) {
+        if (mIconBoundsOverride != null) {
+            outBounds.set(mIconBoundsOverride);
+            return;
+        }
         outBounds.set(0, 0, iconSize, iconSize);
         if (mLayoutHorizontal) {
             int top = (getHeight() - iconSize) / 2;
@@ -1050,6 +1179,15 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver,
         } else {
             outBounds.offset((getWidth() - iconSize) / 2, getPaddingTop());
         }
+    }
+
+    /**
+     * LauncherX: overrides the icon bounds used by the edit-mode adornments (selection box,
+     * remove badge, notification dot). Inline large-folder cells draw their icon much smaller
+     * than [mIconSize], so without this the badges would land away from the icon they belong to.
+     */
+    public void setIconBoundsOverride(@Nullable Rect bounds) {
+        mIconBoundsOverride = bounds == null ? null : new Rect(bounds);
     }
 
     /**

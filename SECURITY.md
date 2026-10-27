@@ -2,28 +2,27 @@
 
 ## Supported versions
 
-> [!WARNING]
-> [Lawnchair Legacy](https://play.google.com/store/apps/details?id=ch.deletescape.lawnchair.plah) is **unsupported**. Use the newer versions instead.
+LauncherX is an experimental fork. Security fixes are applied to the latest development
+build on the default branch. Older builds are not supported.
 
-The latest version of Lawnchair is the only supported version.
+## Reporting a vulnerability
 
-| Version        | Supported          |
-|----------------|--------------------|
-| Nightly build  | :white_check_mark: |
-| 16             | :white_check_mark: |
-| 15             | :x:                |
-| 14             | :x:                |
-| 13             | :x:                |
-| 12.1           | :x:                |
-| 12             | :x:                |
-| 11             | :x:                |
-| Older (Legacy) | :x:                |
+Please **do not** open a public issue for a security vulnerability.
 
-## Reporting security issues
+Use GitHub's private vulnerability reporting:
 
-We appreciate your efforts to responsibly disclose your findings and will make every effort to
-acknowledge your contributions.
+1. Open the repository's **Security** tab.
+2. Choose **Report a vulnerability**.
+3. Include the affected version/commit, device/Android version, reproduction steps, and any
+   proof-of-concept details.
 
-To report an issue, please file a [security advisory on GitHub](https://github.com/LawnchairLauncher/lawnchair/security/advisories/new).
+If private reporting is unavailable, open a minimal public issue asking for a private contact
+channel, without disclosing the vulnerability details.
 
-We'll endeavor to respond quickly, and will keep you updated throughout the process.
+## Scope
+
+In scope: vulnerabilities in LauncherX-specific code and in the way LauncherX handles
+launcher data, widgets, backups, permissions, and intents.
+
+Out of scope: issues that only reproduce in upstream Lawnchair/Launcher3 and are not caused by
+LauncherX changes; OEM ROM limitations; and issues requiring root or a compromised system.

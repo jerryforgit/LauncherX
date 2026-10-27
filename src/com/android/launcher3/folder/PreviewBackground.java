@@ -28,6 +28,7 @@ import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
@@ -54,12 +55,13 @@ import com.android.launcher3.graphics.ShapeDelegate;
 import com.android.launcher3.graphics.ThemeManager;
 import com.android.launcher3.util.Themes;
 import com.android.launcher3.views.ActivityContext;
-import app.lawnchair.preferences2.PreferenceCacheExtensionsKt;
+import com.jerry.launcherx.glass.GlassBackdropBridge;
+import com.jerry.launcherx.preferences2.PreferenceCacheExtensionsKt;
 
-import app.lawnchair.preferences2.PreferenceManager2;
-import app.lawnchair.theme.color.ColorOption;
-import app.lawnchair.theme.color.tokens.ColorTokens;
-import app.lawnchair.util.LawnchairUtilsKt;
+import com.jerry.launcherx.preferences2.PreferenceManager2;
+import com.jerry.launcherx.theme.color.ColorOption;
+import com.jerry.launcherx.theme.color.tokens.ColorTokens;
+import com.jerry.launcherx.util.LauncherXUtilsKt;
 
 /**
  * This object represents a FolderIcon preview background. It stores drawing /
@@ -97,10 +99,51 @@ public class PreviewBackground extends DelegatedCellDrawing {
     private int mStrokeAlpha = MAX_BG_OPACITY;
     private int mShadowAlpha = 255;
     private View mInvalidateDelegate;
+    private boolean mFrostedGlass;
+    private boolean mLiquidGlass;
+    private final Paint mGlassPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private android.graphics.Shader mFrostedShader;
+    private android.graphics.Shader mLiquidShader;
+    private android.graphics.Shader mLiquidShader2;
+    private android.graphics.Shader mEdgeTopShader;
+    private android.graphics.Shader mEdgeBottomShader;
+    private int mGlassW;
+    private int mGlassH;
+    private Bitmap mGlassBackdrop;
+    private int mGlassGeneration;
+    private float mGlassBlurDp = 28f;
+    private float mGlassRefraction = 0.75f;
+    private float mGlassDispersion = 1f;
+    private final Runnable mGlassBackdropListener = new Runnable() {
+        @Override
+        public void run() {
+            if (!mFrostedGlass && !mLiquidGlass) {
+                return;
+            }
+            mGlassBackdrop = mLiquidGlass
+                    ? GlassBackdropBridge.getLens(mContext)
+                    : GlassBackdropBridge.get(mContext, mGlassBlurDp);
+            invalidate();
+            if (mGlassBackdrop == null) {
+                GlassBackdropBridge.addListener(this);
+            }
+        }
+    };
 
     int previewSize;
     int basePreviewOffsetX;
     int basePreviewOffsetY;
+
+    // LauncherX: the area the preview items are laid out in. It is inset from the
+    // background so icons the layout rule places on a wide circle stay fully inside the
+    // background, plus an optional user margin between background and cell edges.
+    int layoutSize;
+    int layoutOffsetX;
+    int layoutOffsetY;
+    int previewMargin;
+
+    // Fraction of the background the preview item layout occupies (before the margin).
+    private static final float LAYOUT_CONTENT_FACTOR = 0.85f;
 
     private CellLayout mDrawingDelegate;
 
@@ -193,11 +236,23 @@ public class PreviewBackground extends DelegatedCellDrawing {
         ColorOption dotColorOption = PreferenceCacheExtensionsKt.firstCached(preferenceManager2.getNotificationDotColor());
         mDotColor = dotColorOption.getColorPreferenceEntry().getLightColor().invoke(context);
         mStrokeColor = ColorTokens.FolderIconBorderColor.resolveColor(context);
-        mBgColor = LawnchairUtilsKt.resolveFolderPreviewColor(context);
+        mBgColor = LauncherXUtilsKt.resolveFolderPreviewColor(context);
+        mFrostedGlass = PreferenceCacheExtensionsKt
+                .firstCached(preferenceManager2.getFolderFrostedGlass());
+        mLiquidGlass = PreferenceCacheExtensionsKt
+                .firstCached(preferenceManager2.getLiquidGlassEnabled())
+                && PreferenceCacheExtensionsKt
+                        .firstCached(preferenceManager2.getFolderLiquidGlass());
+        mGlassBlurDp = PreferenceCacheExtensionsKt
+                .firstCached(preferenceManager2.getFolderGlassBlur());
+        mGlassRefraction = PreferenceCacheExtensionsKt
+                .firstCached(preferenceManager2.getLiquidGlassRefraction());
+        mGlassDispersion = PreferenceCacheExtensionsKt
+                .firstCached(preferenceManager2.getLiquidGlassDispersion());
         ta.recycle();
 
         DeviceProfile grid = activity.getDeviceProfile();
-        // Lawnchair: Find the correct icon size depending on which parent owned them
+        // LauncherX: Find the correct icon size depending on which parent owned them
         if (invalidateDelegate instanceof FolderIcon && ((FolderIcon) invalidateDelegate).isInAppDrawer()) {
             int allAppsIconSize = grid.getAllAppsProfile().getIconSizePx();
             previewSize = Math.round(allAppsIconSize * ICON_VISIBLE_AREA_FACTOR);
@@ -209,6 +264,25 @@ public class PreviewBackground extends DelegatedCellDrawing {
             basePreviewOffsetX = (availableSpaceX - previewSize) / 2;
             basePreviewOffsetY = topPadding + grid.folderIconOffsetYPx;
         }
+
+        // LauncherX: optional margin between the preview background and the cell edges.
+        float marginDp = PreferenceCacheExtensionsKt
+                .firstCached(preferenceManager2.getFolderPreviewMargin());
+        int marginPx = Math.round(marginDp * context.getResources().getDisplayMetrics().density);
+        previewMargin = marginPx;
+        if (marginPx != 0) {
+            previewSize = Math.max(1, previewSize - 2 * marginPx);
+            basePreviewOffsetX += marginPx;
+            basePreviewOffsetY += marginPx;
+        }
+
+        // LauncherX: inset the item layout area inside the background so the preview
+        // icons (arranged by the layout rule on a dilated circle that can extend past
+        // the background bounds) stay fully within the background.
+        layoutSize = Math.max(1, Math.round(previewSize * LAYOUT_CONTENT_FACTOR));
+        int layoutInset = (previewSize - layoutSize) / 2;
+        layoutOffsetX = basePreviewOffsetX + layoutInset;
+        layoutOffsetY = basePreviewOffsetY + layoutInset;
 
         // Stroke width is 1dp
         mStrokeWidth = context.getResources().getDisplayMetrics().density;
@@ -223,7 +297,39 @@ public class PreviewBackground extends DelegatedCellDrawing {
                     Shader.TileMode.CLAMP);
         }
 
+        updateGlassBackdrop();
         invalidate();
+    }
+
+    /**
+     * Fetches the blurred wallpaper slice for the glass preview, requesting it
+     * asynchronously and repainting once it lands. No-op when glass is off.
+     */
+    void clearGlassListener() {
+        GlassBackdropBridge.removeListener(mGlassBackdropListener);
+    }
+
+    private void updateGlassBackdrop() {
+        mGlassGeneration = GlassBackdropBridge.generation();
+        if (!mFrostedGlass && !mLiquidGlass) {
+            GlassBackdropBridge.removeListener(mGlassBackdropListener);
+            mGlassBackdrop = null;
+            return;
+        }
+        Bitmap bmp = mLiquidGlass
+                ? GlassBackdropBridge.getLens(mContext)
+                : GlassBackdropBridge.get(mContext, mGlassBlurDp);
+        mGlassBackdrop = bmp;
+        if (bmp == null) {
+            GlassBackdropBridge.addListener(mGlassBackdropListener);
+            bmp = mLiquidGlass
+                    ? GlassBackdropBridge.getLens(mContext)
+                    : GlassBackdropBridge.get(mContext, mGlassBlurDp);
+            mGlassBackdrop = bmp;
+            if (bmp != null) {
+                GlassBackdropBridge.removeListener(mGlassBackdropListener);
+            }
+        }
     }
 
     void getBounds(Rect outBounds) {
@@ -285,10 +391,103 @@ public class PreviewBackground extends DelegatedCellDrawing {
 
     public void drawBackground(Canvas canvas) {
         mPaint.setStyle(Paint.Style.FILL);
-        mPaint.setColor(getBgColor());
+        int color = getBgColor();
+        int baseAlpha;
+        if (mFrostedGlass && mLiquidGlass) {
+            baseAlpha = 140;
+        } else if (mFrostedGlass) {
+            baseAlpha = 170;
+        } else if (mLiquidGlass) {
+            baseAlpha = 180;
+        } else {
+            baseAlpha = 230;
+        }
+        color = setColorAlphaBound(color, (int) (Color.alpha(color) * (baseAlpha / 255f)));
+        mPaint.setColor(color);
 
         getShape().drawShape(canvas, getOffsetX(), getOffsetY(), getScaledRadius(), mPaint);
+
+        // Clip to the preview shape (circle / squircle / rounded rect) rather than its
+        // bounding rect, so the glass overlay follows the folder outline instead of
+        // rendering as a square that mismatches a circular folder style.
+        int left = getOffsetX();
+        int top = getOffsetY();
+        int size = getScaledRadius() * 2;
+        if (size > 0 && (mFrostedGlass || mLiquidGlass)) {
+            ensureGlassShaders(left, top, size);
+            int save = canvas.save();
+            mPath.reset();
+            getShape().addToPath(mPath, left, top, getScaledRadius());
+            canvas.clipPath(mPath);
+            // Blurred wallpaper slice behind the icon so the glass reads as real glass.
+            // Skipped while the background is drawn delegated onto a cell (drag/accept),
+            // where this canvas is not the icon's own and the position would be wrong.
+            // Also re-request the slice while it is still missing (build pending, or a request
+            // dropped before it landed): otherwise the preview stays a flat colour.
+            if (mGlassBackdrop == null || GlassBackdropBridge.generation() != mGlassGeneration) {
+                updateGlassBackdrop();
+            }
+            if (mGlassBackdrop != null && mInvalidateDelegate != null && !drawingDelegated()) {
+                GlassBackdropBridge.draw(
+                        mInvalidateDelegate, canvas, mGlassBackdrop,
+                        left, top, left + size, top + size,
+                        mLiquidGlass ? mGlassRefraction : 0f,
+                        getScaledRadius(), mGlassDispersion);
+            }
+            if (mFrostedGlass) {
+                // iOS UIBlurEffect-style milky veil.
+                mGlassPaint.setShader(mFrostedShader);
+                mGlassPaint.setAlpha(90);
+                canvas.drawRect(left, top, left + size, top + size, mGlassPaint);
+            }
+            canvas.restoreToCount(save);
+        }
         drawShadow(canvas);
+    }
+
+    /**
+     * Creates a LinearGradient without triggering Shader.detectColorSpace, which crashes
+     * on Android 13+ when packed int colours carry an invalid colour-space ID. We
+     * rebuild the colours via Color.argb which produces properly packed sRGB values.
+     */
+    private static android.graphics.LinearGradient safeGradient(
+            float x0, float y0, float x1, float y1, int c0, int c1) {
+        int a0 = (c0 >> 24) & 0xFF;
+        int r0 = (c0 >> 16) & 0xFF;
+        int g0 = (c0 >> 8) & 0xFF;
+        int b0 = c0 & 0xFF;
+        int a1 = (c1 >> 24) & 0xFF;
+        int r1 = (c1 >> 16) & 0xFF;
+        int g1 = (c1 >> 8) & 0xFF;
+        int b1 = c1 & 0xFF;
+        return new android.graphics.LinearGradient(
+                x0, y0, x1, y1,
+                android.graphics.Color.argb(a0, r0, g0, b0),
+                android.graphics.Color.argb(a1, r1, g1, b1),
+                Shader.TileMode.CLAMP);
+    }
+
+    /** Lazily builds the gradient shaders for the iOS-style glass overlays. */
+    private void ensureGlassShaders(int left, int top, int size) {
+        if (mFrostedShader != null && mGlassW == size && mGlassH == size) return;
+        mGlassW = size;
+        mGlassH = size;
+        float s = size;
+        mFrostedShader = safeGradient(
+                left, top, left, top + s,
+                0x33FFFFFF, 0x0AFFFFFF);
+        mLiquidShader = safeGradient(
+                left - s * 0.1f, top - s * 0.1f, left + s * 0.8f, top + s * 0.8f,
+                0x8CFFFFFF, 0x00FFFFFF);
+        mLiquidShader2 = safeGradient(
+                left + s * 1.1f, top + s * 1.1f, left + s * 0.2f, top + s * 0.2f,
+                0x4DFFFFFF, 0x00FFFFFF);
+        mEdgeTopShader = safeGradient(
+                left, top, left, top + s * 0.12f,
+                0xB3FFFFFF, 0x00FFFFFF);
+        mEdgeBottomShader = safeGradient(
+                left, top + s * 0.88f, left, top + s,
+                0x00000000, 0x1A000000);
     }
 
     private ShapeDelegate getShape() {

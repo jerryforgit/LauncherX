@@ -30,6 +30,9 @@ class EditModeState(id: Int) : LauncherState(id, StatsLogManager.LAUNCHER_STATE_
     companion object {
         const val DEPTH_15_PERCENT = 0.15f
 
+        /** How much the workspace is dimmed while editing. */
+        private const val EDIT_MODE_BACKGROUND_ALPHA = 0.35f
+
         private val STATE_FLAGS =
             (FLAG_MULTI_PAGE or
                 FLAG_WORKSPACE_INACCESSIBLE or
@@ -116,8 +119,15 @@ class EditModeState(id: Int) : LauncherState(id, StatsLogManager.LAUNCHER_STATE_
     }
 
     override fun getWorkspaceBackgroundAlpha(launcher: Launcher): Float {
-        return 0.2f
+        return EDIT_MODE_BACKGROUND_ALPHA
     }
+
+    /**
+     * While editing, hide the hotseat, the workspace page indicator, the vertical swipe indicator
+     * and the floating search bar, leaving the workspace (and the edit overlays) the only visible
+     * content.
+     */
+    override fun getVisibleElements(launcher: Launcher): Int = 0
 
     override fun onLeavingState(launcher: Launcher?, toState: LauncherState?) {
         // cleanup any changes to workspace

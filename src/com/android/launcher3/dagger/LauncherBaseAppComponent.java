@@ -57,26 +57,26 @@ import com.android.launcher3.widget.util.WidgetSizeHandler;
 
 import javax.inject.Named;
 
-import app.lawnchair.DeviceProfileOverrides;
-import app.lawnchair.HeadlessWidgetsManager;
-import app.lawnchair.LawnchairActivityCachingLogic;
-import app.lawnchair.NotificationManager;
-import app.lawnchair.data.folder.service.FolderService;
-import app.lawnchair.data.iconoverride.IconOverrideRepository;
-import app.lawnchair.data.wallpaper.service.WallpaperService;
-import app.lawnchair.font.FontCache;
-import app.lawnchair.font.FontManager;
-import app.lawnchair.font.googlefonts.GoogleFontsListing;
+import com.jerry.launcherx.DeviceProfileOverrides;
+import com.jerry.launcherx.HeadlessWidgetsManager;
+import com.jerry.launcherx.LauncherXActivityCachingLogic;
+import com.jerry.launcherx.NotificationManager;
+import com.jerry.launcherx.data.folder.service.FolderService;
+import com.jerry.launcherx.data.iconoverride.IconOverrideRepository;
+import com.jerry.launcherx.data.wallpaper.service.WallpaperService;
+import com.jerry.launcherx.font.FontCache;
+import com.jerry.launcherx.font.FontManager;
+import com.jerry.launcherx.font.googlefonts.GoogleFontsListing;
 import app.lawnchair.icons.iconpack.IconPackProvider;
 import app.lawnchair.icons.shape.IconShapeManager;
-import app.lawnchair.preferences.PreferenceManager;
-import app.lawnchair.predictions.LawnchairPredictionManager;
-import app.lawnchair.preferences2.PreferenceManager2;
-import app.lawnchair.smartspace.provider.SmartspaceProvider;
-import app.lawnchair.theme.ThemeProvider;
-import app.lawnchair.ui.preferences.components.colorpreference.ColorPreferenceModelList;
-import app.lawnchair.ui.preferences.data.liveinfo.LiveInformationManager;
-import app.lawnchair.util.LawnchairWindowManagerProxy;
+import com.jerry.launcherx.preferences.PreferenceManager;
+import com.jerry.launcherx.predictions.LauncherXPredictionManager;
+import com.jerry.launcherx.preferences2.PreferenceManager2;
+import com.jerry.launcherx.smartspace.provider.SmartspaceProvider;
+import com.jerry.launcherx.theme.ThemeProvider;
+import com.jerry.launcherx.ui.preferences.components.colorpreference.ColorPreferenceModelList;
+import com.jerry.launcherx.ui.preferences.data.liveinfo.LiveInformationManager;
+import com.jerry.launcherx.util.LauncherXWindowManagerProxy;
 import dagger.BindsInstance;
 
 /**
@@ -127,9 +127,9 @@ public interface LauncherBaseAppComponent {
     WidgetSizeHandler getWidgetSizeHandler();
 
 
-    // Lawnchair-specific
+    // LauncherX-specific
     
-    LawnchairWindowManagerProxy getLWMP();
+    LauncherXWindowManagerProxy getLWMP();
     DeviceProfileOverrides getDPO();
     ThemeProvider getThemeProvider();
     SmartspaceProvider getSmartspaceProvider();
@@ -137,7 +137,7 @@ public interface LauncherBaseAppComponent {
     NotificationManager getNotificationManager();
     ColorPreferenceModelList getColorPreferenceModelList();
     LiveInformationManager getLiveInformationManager();
-    LawnchairPredictionManager getLawnchairPredictionManager();
+    LauncherXPredictionManager getLauncherXPredictionManager();
     PreferenceManager2 getPreferenceManager2();
     PreferenceManager getPreferenceManager();
     FontCache getFontCache();
@@ -148,7 +148,7 @@ public interface LauncherBaseAppComponent {
     WallpaperService getWallpaperService();
     IconOverrideRepository getIconOverrideRepository();
 
-    LawnchairActivityCachingLogic getLawnchairActivityCachingLogic();
+    LauncherXActivityCachingLogic getLauncherXActivityCachingLogic();
     FolderService getFolderService();
 
     /** Builder for LauncherBaseAppComponent. */

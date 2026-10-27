@@ -1,4 +1,4 @@
-# The rules from AOSP are located in proguard.flags file, we can just maintain Lawnchair related rules here.
+# The rules from AOSP are located in proguard.flags file, we can just maintain LauncherX related rules here.
 
 # Optimization options.
 -allowaccessmodification
@@ -17,11 +17,22 @@
   public static final ** CREATOR;
 }
 
-# Lawnchair specific rules.
--keep,allowshrinking,allowoptimization class app.lawnchair.LawnchairProto$* { *; }
--keep,allowshrinking,allowoptimization class app.lawnchair.LawnchairApp { *; }
--keep,allowshrinking,allowoptimization class app.lawnchair.LawnchairLauncher { *; }
--keep,allowshrinking,allowoptimization class app.lawnchair.compatlib.** { *; }
+# LauncherX specific rules.
+-keep,allowshrinking,allowoptimization class com.jerry.launcherx.LauncherXProto$* { *; }
+-keep,allowshrinking,allowoptimization class com.jerry.launcherx.LauncherXApp { *; }
+-keep,allowshrinking,allowoptimization class com.jerry.launcherx.LauncherXLauncher { *; }
+-keep,allowshrinking,allowoptimization class com.jerry.launcherx.compatlib.** { *; }
+
+# Keep Compose stability fields for preference classes
+-keepclassmembers class com.jerry.launcherx.preferences.** {
+    public static final int $stable;
+}
+-keepclassmembers class com.jerry.launcherx.preferences2.** {
+    public static final int $stable;
+}
+# Keep preference inner classes entirely (Compose $stable issue)
+-keep class com.jerry.launcherx.preferences.BasePreferenceManager$* { *; }
+-keep class com.jerry.launcherx.preferences.BasePreferenceManager { *; }
 
 -keep,allowshrinking,allowoptimization class com.google.protobuf.Timestamp { *; }
 -keep class * extends com.google.protobuf.GeneratedMessageLite { *; }

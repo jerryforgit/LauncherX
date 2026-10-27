@@ -1,32 +1,51 @@
-# Contributing to Lawnchair
+# Contributing to LauncherX
 
-Thank you for your interest in contributing to the Lawnchair project. This document provides general reminders and directs you to our official, living documentation hub at [docs.lawnchair.app](https://docs.lawnchair.app).
+Thanks for your interest in LauncherX. This is an experimental fork of Lawnchair 16; bug
+reports, code, translations, and design feedback are all welcome.
 
-## General reminders
+## Before opening an issue
 
-Before participating in any area of the project, please keep these core guidelines in mind:
+- Search existing issues first.
+- Make sure the problem is present in the latest LauncherX build, not only in an old build.
+- Check whether the same problem exists in upstream Lawnchair. If it is an upstream bug,
+  reporting it to Lawnchair as well may be useful, but LauncherX-specific changes belong here.
+- Include your device model, Android version, LauncherX version, and exact reproduction steps.
+- Attach a logcat if the app crashes or misbehaves. Avoid including personal data such as
+  account names, phone numbers, or private file paths.
 
-* Adhere to our [Code of Conduct](CODE_OF_CONDUCT.md) during all interactions.
-* Always search our [GitHub issue tracker](https://github.com/LawnchairLauncher/lawnchair/issues) to see if a bug has already been reported or a feature requested before opening a new issue.
-* Avoid using the issue tracker for personal support. If you need help, please visit our [community channels](https://docs.lawnchair.app/project-and-community/get-involved/community-channels) on Telegram or Discord.
+## Pull requests
 
-### Contributing non-code
+1. Keep the change focused. One logical change per pull request.
+2. Follow the existing code style and package structure.
+3. Run `./gradlew spotlessCheck` before submitting.
+4. Build and test the affected variant:
+   `./gradlew assembleLawnWithQuickstepGithubDebug`.
+5. Describe what changed, why it changed, and how you tested it.
+6. Do not commit `local.properties`, `keystore.properties`, `*.jks`, APKs, AABs, or build
+   outputs.
+7. Retain upstream copyright and license headers. New files should use the Apache-2.0 header
+   used by the rest of the project unless they deliberately follow another compatible license.
 
-You do not need to write code to make a significant impact on Lawnchair. We welcome and encourage several forms of non-code contributions:
+## Source layout
 
-* You can help make Lawnchair accessible to a global audience by contributing translations through [Lawnchair on Crowdin](https://lawnchair.crowdin.com/lawnchair).
-* You can help make development sustainable by [donating to the project](https://opencollective.com/lawnchair/).
-* You can help maintain a clean and effective issue tracker by joining our [triaging issues](https://docs.lawnchair.app/community/get-involved/triage-issues).
-* You can help keep our documentation accurate and clear by contributing directly to our [documentation files](https://docs.lawnchair.app/community/get-involved/writing-documentation).
+- `lawnchair/src/com/jerry/launcherx/` — LauncherX/Lawnchair-specific code
+- `lawnchair/res/` — LauncherX resources and settings
+- `src/` — Launcher3 sources
+- `quickstep/` — recents/Quickstep integration
+- `platform_frameworks_libs_systemui/` — Git submodule
 
-### Contributing code
+The app-level package is `com.jerry.launcherx`. `app.lawnchair.icons`,
+`com.android.launcher3`, and `app.lawnchair.lawnfeed` are intentionally kept: the first is shared
+with the icon submodule, the second is the AOSP namespace, and the third is an external feed app.
+Do not rename those in ordinary PRs; see `PACKAGE_RENAME.md`.
 
-Lawnchair is built on a highly complex, AOSP-derived foundation. Because of this, direct code contribution is challenging and may not be suitable for beginners. 
+## Translations
 
-Before setting up your environment or writing any code, please read our [onboarding preface](https://docs.lawnchair.app/developers) to understand the unique challenges of this codebase.
+Some translations are inherited from Lawnchair and still use the Lawnchair name. A
+translation cleanup is welcome, but keep changes separate from functional pull requests.
 
-If you are ready to write code, refer to [our official developer guides](https://docs.lawnchair.app/developers) on our documentation site:
+## Licensing
 
-* [Setup your build environment](https://docs.lawnchair.app/developers/introduction/get-started)
-* [Understand our development workflow](https://docs.lawnchair.app/developers/standards/development-workflow)
-* [Follow code standards](https://docs.lawnchair.app/developer-guide/standards/coding-standards)
+By contributing, you agree that your contribution is licensed under the Apache License 2.0,
+unless a file explicitly states another license. See [LICENSE.txt](LICENSE.txt) and
+[NOTICE](NOTICE).

@@ -71,7 +71,7 @@ import com.android.launcher3.widget.ListenableAppWidgetHost.ProviderChangedListe
 
 import java.util.List;
 
-import app.lawnchair.theme.color.tokens.ColorTokens;
+import com.jerry.launcherx.theme.color.tokens.ColorTokens;
 
 public class PendingAppWidgetHostView extends LauncherAppWidgetHostView
         implements OnClickListener, ItemInfoUpdateReceiver {

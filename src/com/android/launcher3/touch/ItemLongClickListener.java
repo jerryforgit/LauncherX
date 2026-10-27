@@ -37,6 +37,9 @@ import com.android.launcher3.config.FeatureFlags;
 import com.android.launcher3.dragndrop.DragController;
 import com.android.launcher3.dragndrop.DragOptions;
 import com.android.launcher3.folder.Folder;
+import com.android.launcher3.folder.FolderContextMenu;
+import com.android.launcher3.folder.FolderIcon;
+import com.android.launcher3.folder.FolderResizeFrame;
 import com.android.launcher3.logging.StatsLogManager.StatsLogger;
 import com.android.launcher3.model.data.ItemInfo;
 import com.android.launcher3.model.data.PrivateSpaceInstallAppButtonInfo;
@@ -74,6 +77,15 @@ public class ItemLongClickListener {
             return false;
         }
         if (!(v.getTag() instanceof ItemInfo)) return false;
+
+        if (v instanceof FolderIcon) {
+            if (FolderResizeFrame.consumeJustClosed()) {
+                // The resize frame was dismissed by this same gesture: start a drag instead.
+            } else if (FolderResizeFrame.showForFolder((FolderIcon) v,
+                    () -> FolderContextMenu.showForFolder((FolderIcon) v))) {
+                return true;
+            }
+        }
 
         launcher.setWaitingForResult(null);
         beginDrag(v, launcher, (ItemInfo) v.getTag(), new DragOptions());

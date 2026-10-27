@@ -10,7 +10,7 @@ import app.lawnchair.icons.picker.IconEntry
 import app.lawnchair.icons.picker.IconPickerCategory
 import app.lawnchair.icons.picker.IconPickerItem
 import app.lawnchair.icons.picker.IconType
-import app.lawnchair.util.requireSystemService
+import com.jerry.launcherx.util.requireSystemService
 import com.android.launcher3.R
 import com.android.launcher3.pm.UserCache
 import com.android.launcher3.util.ComponentKey

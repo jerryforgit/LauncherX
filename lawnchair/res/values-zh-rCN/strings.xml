@@ -31,6 +31,7 @@
     <string name="action_lock">锁定</string>
     <string name="action_apply">应用</string>
     <string name="action_customize">自定义</string>
+    <string name="action_hide_dock_search">关闭搜索栏</string>
     <string name="always_choice">总是</string>
     <string name="never_choice">从不</string>
     <string name="clipboard">剪贴板</string>
@@ -38,6 +39,29 @@
     <string name="action_copy">复制</string>
     <string name="action_paste">粘贴</string>
     <string name="action_done">完成</string>
+    <string name="edit_mode_add_widget">小部件</string>
+    <string name="edit_mode_tidy">整理</string>
+    <string name="edit_mode_home_settings">桌面设置</string>
+    <string name="edit_mode_on_long_press_label">长按进入编辑模式</string>
+    <string name="edit_mode_on_long_press_description">在桌面空白处长按即可进入编辑模式。关闭后长按将改为显示选项菜单。</string>
+    <string name="edit_mode_icon_jiggle_label">图标抖动动画</string>
+    <string name="edit_mode_icon_jiggle_description">编辑桌面时图标轻微摆动。</string>
+    <string name="edit_mode_remove_badge_label">移除角标</string>
+    <string name="edit_mode_remove_badge_description">编辑桌面时在图标上显示角标，点击即可移除该项。</string>
+    <string name="edit_mode_multi_select_label">多选</string>
+    <string name="edit_mode_multi_select_description">编辑桌面时点击图标可选择多项，并进行移除、新建文件夹或整组拖动等批量操作。</string>
+    <string name="edit_mode_selection_feedback_label">选择反馈</string>
+    <string name="edit_mode_selection_feedback_description">选择变化时缩放所选图标并给出轻微振动反馈。</string>
+    <string name="edit_mode_selection_count">已选 %1$d 项</string>
+    <string name="edit_mode_selection_new_folder">新建文件夹</string>
+    <string name="edit_mode_selection_add_to_folder">加入文件夹</string>
+    <string name="edit_mode_selection_merge_folders">合并文件夹</string>
+    <string name="edit_mode_selection_remove">移除</string>
+    <string name="edit_mode_selection_cancel">取消</string>
+    <string name="edit_mode_page_strip_label">页码条</string>
+    <string name="edit_mode_page_strip_description">编辑桌面时在底部显示页码条。点击可切换页面，点击页码上的主页图标可将该页设为默认页，拖动可调整页面顺序。关闭时可在底部动作栏里设置默认页面。</string>
+    <string name="home_screen_editing_label">桌面编辑</string>
+    <string name="home_screen_editing_description">编辑模式、图标动画及其他编辑选项</string>
     <string name="select_all">全选</string>
     <string name="deselect_all">取消全选</string>
     <string name="inverse_selection">逆向全选</string>
@@ -61,7 +85,7 @@
     <string name="time_weeks_ago">%d周</string>
     <string name="time_months_ago">%d月</string>
     <string name="time_years_ago">%d年</string>
-    <string name="managed_by_lawnchair">由 Lawnchair 管理</string>
+    <string name="managed_by_lawnchair">由 LauncherX 管理</string>
     <!-- When mentioning settings UI -->
     <string name="smartspace_preferences">首选项</string>
     <string name="settings_button_text">启动器设置</string>
@@ -117,7 +141,7 @@
     <string name="my_folder_label">我的文件夹</string>
     <string name="sort_active_items_action">排序活跃项目</string>
     <!-- A11y description -->
-    <string name="accessibility_service_description">当您使用手势执行某些操作（如锁定手机）时，Lawnchair 需要辅助功能权限。\n\nLawnchair 不会监视您的操作，尽管所有辅助功能服务都要求此项权限。Lawnchair 会丢弃系统发送的任何事件。\n\n要锁定手机或打开最近任务屏幕，Lawnchair 会使用 performGlobalAction 辅助功能服务。</string>
+    <string name="accessibility_service_description">当您使用手势执行某些操作（如锁定手机）时，LauncherX 需要辅助功能权限。\n\nLauncherX 不会监视您的操作，尽管所有辅助功能服务都要求此项权限。LauncherX 会丢弃系统发送的任何事件。\n\n要锁定手机或打开最近任务屏幕，LauncherX 会使用 performGlobalAction 辅助功能服务。</string>
     <string name="x_with_y_count">%1$s (%2$d)</string>
     <string name="x_by_y">%1$d &#xd7; %2$d</string>
     <string name="x_and_y">%1$s &amp; %2$s</string>
@@ -147,6 +171,7 @@
     <string name="drawer_search_label">抽屉搜索</string>
     <string name="drawer_search_description">网络建议、全局搜索</string>
     <string name="folders_label">文件夹</string>
+    <string name="folder_desktop_label">桌面标签</string>
     <string name="folders_description">行数和列数</string>
     <string name="gestures_label">手势</string>
     <string name="gestures_description">点击和滑动</string>
@@ -156,7 +181,7 @@
     <string name="backup_and_restore_description">保存当前设置，恢复备份</string>
     <string name="about_label">关于</string>
     <string name="app_info_drop_target_label">应用信息</string>
-    <string name="debug_restart_launcher">重启 Lawnchair</string>
+    <string name="debug_restart_launcher">重启 LauncherX</string>
     <string name="experimental_features_label">实验性功能</string>
     <!-- Experimental features -->
     <string name="workspace_label">工作区</string>
@@ -191,6 +216,7 @@
     <string name="recents_lock_unlock_description">开启后，点击‘全部清除’时，所选应用不会被关闭</string>
     <!--Overlay-->
     <string name="app_closing_animation">应用关闭动画</string>
+    <string name="app_opening_animation">应用打开动画</string>
     <string name="overlay_fade_in">淡入</string>
     <string name="overlay_suck_in">缩放</string>
     <string name="overlay_label">覆盖</string>
@@ -211,13 +237,13 @@
     <string name="dismissed_prediction_apps_label_with_count">锁定应用 (%1$d)</string>
     <string name="prediction_system_settings">管理系统建议</string>
     <string name="missing_usage_access_label">需要使用权限</string>
-    <string name="missing_usage_access_desc">要提升应用建议，启动<xliff:g id="name" example="Lawnchair">%1$s</xliff:g>的使用权限</string>
+    <string name="missing_usage_access_desc">要提升应用建议，启动<xliff:g id="name" example="LauncherX">%1$s</xliff:g>的使用权限</string>
     <!--
 
     Notifications
 
     -->
-    <string name="set_default_launcher_tip">要访问快捷方式和其他功能，请将 Lawnchair 设置为默认启动器</string>
+    <string name="set_default_launcher_tip">要访问快捷方式和其他功能，请将 LauncherX 设置为默认启动器</string>
     <string name="notification_dots">通知圆点</string>
     <string name="show_notification_count">显示通知数量</string>
     <string name="notification_dots_color">通知圆点颜色</string>
@@ -410,11 +436,11 @@
     <string name="torch_status_on">手电筒已开启</string>
     <string name="torch_action_off">点击以关闭</string>
     <!-- Onboarding strings -->
-    <string name="onboarding_open_settings_title">设置 Lawnchair</string>
+    <string name="onboarding_open_settings_title">设置 LauncherX</string>
     <string name="onboarding_open_settings_subtitle">长按主屏幕打开设置</string>
-    <string name="onboarding_major_upgrade_title">全新 Lawnchair 来了</string>
+    <string name="onboarding_major_upgrade_title">全新 LauncherX 来了</string>
     <string name="onboarding_major_upgrade_subtitle">看看新变化</string>
-    <string name="onboarding_welcome">欢迎来到 Lawnchair！</string>
+    <string name="onboarding_welcome">欢迎来到 LauncherX！</string>
     <string name="onboarding_swipe_up">上滑打开应用抽屉</string>
     <!-- Smartspacer strings -->
     <string name="maximum_number_of_targets">目标数量上限</string>
@@ -425,7 +451,7 @@
     <string name="event_provider_missing_notification_dots">要使用<xliff:g example="My Provider" id="providerName">%1$s</xliff:g>，启用通知点</string>
     <!-- Toggle button for enabling Smartspace -->
     <string name="smartspace_widget_toggle_label">在主屏幕显示</string>
-    <string name="smartspace_widget_toggle_description">资讯一览可以通过 Lawnchair 小部件添加到主屏幕</string>
+    <string name="smartspace_widget_toggle_description">资讯一览可以通过 LauncherX 小部件添加到主屏幕</string>
     <!-- List of available providers -->
     <string name="smartspace_mode_label">资讯一览提供程序</string>
     <string name="smartspace_mode_google">Google</string>
@@ -497,6 +523,8 @@
     -->
     <string name="gesture_double_tap">双击</string>
     <string name="gesture_swipe_up">向上滑动</string>
+    <string name="launchpad_widget_label">启动台</string>
+    <string name="launchpad_widget_description">打开应用抽屉</string>
     <string name="gesture_swipe_down">向下滑动</string>
     <string name="gesture_two_finger_swipe_down">双指向下滑动</string>
     <string name="gesture_two_finger_swipe_up">双指向上滑动</string>
@@ -517,15 +545,15 @@
     <string name="gesture_handler_open_assistant">打开助手</string>
     <string name="pick_app_for_gesture">选择应用</string>
     <string name="dt2s_admin_hint_title">需要管理员权限</string>
-    <string name="dt2s_admin_hint">要使设备进入睡眠状态，请将 Lawnchair 设置为设备管理员应用。点击“打开设置”，然后点击“激活此设备管理员应用”。</string>
+    <string name="dt2s_admin_hint">要使设备进入睡眠状态，请将 LauncherX 设置为设备管理员应用。点击“打开设置”，然后点击“激活此设备管理员应用”。</string>
     <string name="dt2s_admin_warning">关闭使设备进入睡眠状态的手势功能。</string>
     <string name="d2ts_recents_a11y_hint_title">打开无障碍服务</string>
     <string name="sleep_a11y_hint">使设备进入睡眠状态</string>
     <string name="notifications_fallback_a11y_hint">打开通知面板</string>
     <string name="quick_settings_a11y_hint">打开快速设置面板</string>
     <string name="recents_screen_a11y_hint">打开最近应用屏幕</string>
-    <string name="generic_a11y_hint">想要%1$s，启动 Lawnchair 辅助功能服务。点击“打开设置”，选择“Lawnchair”然后启用“使用 Lawnchair”。</string>
-    <string name="generic_a11y_disclaimer">Lawnchair 使用辅助功能的 `performGlobalAction` 方法来执行此操作。这是一个敏感权限，允许监控其他应用。但是，Lawnchair 未配置此功能，因此不会收到任何事件。</string>
+    <string name="generic_a11y_hint">想要%1$s，启动 LauncherX 辅助功能服务。点击“打开设置”，选择“LauncherX”然后启用“使用 LauncherX”。</string>
+    <string name="generic_a11y_disclaimer">LauncherX 使用辅助功能的 `performGlobalAction` 方法来执行此操作。这是一个敏感权限，允许监控其他应用。但是，LauncherX 未配置此功能，因此不会收到任何事件。</string>
     <string name="sleep_mode_label">睡眠模式</string>
     <string name="sleep_mode_auto">自动</string>
     <string name="sleep_mode_root">耕</string>
@@ -536,7 +564,7 @@
     Bug reporting
 
     -->
-    <string name="lawnchair_bug_report">Lawnchair 错误报告</string>
+    <string name="lawnchair_bug_report">LauncherX 错误报告</string>
     <string name="crash_report_notif_title">%1$s 已崩溃</string>
     <string name="action_upload_crash_report">上传崩溃日志</string>
     <string name="action_upload_error">上传失败</string>
@@ -592,7 +620,7 @@
     <string name="edit_mode_page_strip_page">第 %1$d 页</string>
     <string name="edit_mode_page_strip_set_home">设置为首页</string>
     <string name="edit_mode_page_strip_home_selected">默认主页</string>
-    <string name="edit_mode_page_strip_tip">拖动页面重新排序。点击主屏幕图标设置默认页面。</string>
+    <string name="edit_mode_page_strip_tip">拖动页面重新排序，点击页码上的主页图标可将该页设为默认页。</string>
     <string name="popup_menu">弹出菜单</string>
     <string name="popup_menu_items">弹窗目录项目</string>
     <string name="edit_menu_items">编辑弹窗目录项目</string>
@@ -626,6 +654,30 @@
     <string name="apply_accent_color_label">应用强调色</string>
     <string name="search_provider">搜索提供方</string>
     <string name="hotseat_background">显示背景</string>
+    <string name="hotseat_capsule_bg">悬浮胶囊背景</string>
+    <string name="hotseat_capsule_elevation">胶囊阴影</string>
+    <string name="hotseat_capsule_margin_bottom">底部边距</string>
+    <string name="hotseat_capsule_margin_left">左侧边距</string>
+    <string name="hotseat_capsule_margin_right">右侧边距</string>
+    <string name="hotseat_capsule_margin_top">顶部边距</string>
+    <string name="hotseat_capsule_inner_padding_left">内边距左</string>
+    <string name="hotseat_capsule_inner_padding_right">内边距右</string>
+    <string name="hotseat_capsule_inner_padding_top">内边距上</string>
+    <string name="hotseat_capsule_inner_padding_bottom">内边距下</string>
+    <string name="hotseat_capsule_corner_radius">圆角</string>
+    <string name="hotseat_recent_apps_title">最近打开</string>
+    <string name="hotseat_recent_apps_summary">在 Dock 栏显示最近使用的应用</string>
+    <string name="hotseat_recent_apps_max_count">最近打开数量上限</string>
+    <string name="hotseat_recent_apps_permission_title">需要使用情况访问权限</string>
+    <string name="hotseat_recent_apps_permission_summary">授予权限后可在 Dock 栏显示最近打开的应用</string>
+    <string name="hotseat_recent_apps_permission_button">授予权限</string>
+    <string name="hotseat_recent_apps_divider_enabled">显示分隔线</string>
+    <string name="hotseat_recent_apps_divider_color">分隔线颜色</string>
+    <string name="hotseat_recent_apps_divider_alpha">分隔线透明度</string>
+    <string name="hotseat_recent_apps_divider_height">分隔线高度</string>
+    <string name="hotseat_recent_apps_spacing">应用间距</string>
+    <string name="hotseat_recent_apps_padding_left">左边距</string>
+    <string name="hotseat_recent_apps_padding_right">右边距</string>
     <string name="hotseat_bg_horizontal_inset_left">左距</string>
     <string name="hotseat_bg_horizontal_inset_right">右距</string>
     <string name="hotseat_bg_vertical_inset_top">上距</string>
@@ -644,20 +696,27 @@
     <string name="dock_icons">Dock 栏图标</string>
     <string name="dock_rows">底部栏行数</string>
     <string name="dock_pages">Dock 页面</string>
+    <string name="dock_width_mode">Dock 宽度</string>
+    <string name="dock_width_auto">自动（手机全宽，平板内容宽度）</string>
+    <string name="dock_width_full">全宽</string>
+    <string name="dock_width_content">内容宽度</string>
+    <string name="dock_bar_app_spacing">应用间距</string>
+    <string name="dock_bar_left_padding">左内边距</string>
+    <string name="dock_bar_right_padding">右内边距</string>
     <string name="state_folded">%1$s (已折叠)</string>
     <string name="state_unfolded">%1$s (未折叠)</string>
     <string name="folded_label">折叠</string>
     <string name="unfolded_label">展开</string>
     <string name="when_folded_label">每当已折叠</string>
     <string name="when_unfolded_label">每当未折叠</string>
-    <string name="unfolded_grid_description">Lawnchair 将两页纸拼在一起，以填充更大的显示空间</string>
+    <string name="unfolded_grid_description">LauncherX 将两页纸拼在一起，以填充更大的显示空间</string>
     <string name="foldable_columns_error">折叠后的值必须小于或等于展开后的值。如有需要，系统会自动调整。</string>
     <string name="hotseat_bottom_space_label">底部边距</string>
     <string name="page_indicator_height">页面指​​示器高度</string>
     <!-- Search providers -->
     <string name="search_provider_app_search">应用搜索</string>
     <string name="search_provider_custom">自定义</string>
-    <string name="search_provider_sponsored_description">%1$s 和 Lawnchair 有收益分成协议。\n\n使用 %1$s 进行搜索有助于支持 Lawnchair。</string>
+    <string name="search_provider_sponsored_description">搜索由 %1$s 提供。</string>
     <string name="app_label">应用</string>
     <string name="website_label">网站</string>
     <string name="qsb_search_provider_app_required">未安装应用</string>
@@ -688,12 +747,66 @@
     </plurals>
     <!-- Folder settings -->
     <string name="folder_preview_bg_opacity_label">图标预览背景不透明度</string>
+    <string name="folder_preview_margin_label">预览背景边距</string>
     <string name="folder_bg_opacity_label">文件夹背景不透明度</string>
     <string name="folder_preview_bg_color_label">图标背景颜色</string>
     <string name="max_folder_columns">最大文件夹列数</string>
     <string name="max_folder_rows">最大文件夹行数</string>
+    <!-- Large folder settings -->
+    <string name="large_folder_label">大文件夹</string>
+    <string name="large_folder_description">背景、间距和图标大小</string>
+    <string name="large_folder_show_name_label">桌面标签</string>
+    <string name="large_folder_bg_opacity_label">背景不透明度</string>
+    <string name="large_folder_bg_color_label">背景颜色</string>
+    <string name="large_folder_effects_label">效果</string>
+    <string name="large_folder_frosted_glass_label">毛玻璃</string>
+    <string name="large_folder_liquid_glass_label">液态玻璃</string>
+    <string name="glass_blur_intensity_label">模糊强度</string>
+    <string name="liquid_glass_group">液态玻璃</string>
+    <string name="frosted_glass_label">毛玻璃</string>
+    <string name="liquid_glass_description">折射、色散与高光效果</string>
+    <string name="frosted_glass_description">文件夹与 Dock 的模糊和磨砂覆盖</string>
+    <string name="glass_apply_to">应用到</string>
+    <string name="restore_defaults">恢复默认设置</string>
+    <string name="restore_defaults_confirmation">将液态玻璃恢复为 Lens 预设？</string>
+    <string name="liquid_glass_master_label">启用液态玻璃</string>
+    <string name="liquid_glass_refraction_label">折射强度</string>
+    <string name="liquid_glass_dispersion_label">色散强度</string>
+    <string name="liquid_glass_specular_flow_label">高光连续流动</string>
+    <string name="liquid_glass_wallpaper_permission_label">壁纸访问权限</string>
+    <string name="liquid_glass_wallpaper_permission_desc">液态玻璃需要读取壁纸来生成背景折射，点击授予权限。</string>
+    <string name="liquid_glass_quality_group">画质与内存</string>
+    <string name="liquid_glass_quality_label">液态玻璃画质</string>
+    <string name="liquid_glass_quality_desc">液态玻璃会缓存一张壁纸背景图。档位越高，背景按越高的分辨率采样、观感越清晰，但占用的内存也越多；多余缓存会在更换壁纸或重启桌面后释放。</string>
+    <string name="liquid_glass_quality_max">最高 —— 最清晰，约增加 50–70 MB</string>
+    <string name="liquid_glass_quality_high">高 —— 约增加 30–50 MB</string>
+    <string name="liquid_glass_quality_balanced">均衡 —— 约增加 15–25 MB</string>
+    <string name="liquid_glass_quality_saver">省内存 —— 原先较柔和的观感</string>
+    <string name="folder_group_small_folder">小文件夹</string>
+    <string name="folder_group_popup_folder">弹窗文件夹</string>
+    <string name="folder_popup_bg_blur_label">背景模糊</string>
+    <string name="folder_popup_bg_blur_strength_label">背景模糊强度</string>
+    <string name="folder_open_centered_label">在屏幕居中</string>
+    <string name="large_folder_spacing_label">间距</string>
+    <string name="large_folder_bg_padding_label">格子外边距</string>
+    <string name="large_folder_bg_inset_label">背景边距</string>
+    <string name="large_folder_icon_gap_label">图标间距</string>
+    <string name="large_folder_icon_scale_label">图标大小</string>
+    <string name="large_folder_layout_label">布局</string>
+    <string name="large_folder_align_h_label">水平对齐</string>
+    <string name="large_folder_align_v_label">垂直对齐</string>
+    <string name="large_folder_max_span_label">最大 span</string>
+    <string name="large_folder_swiper_label">Swiper 翻页</string>
+    <string name="large_folder_swiper_off">关闭（+N）</string>
+    <string name="large_folder_swiper_horizontal">水平</string>
+    <string name="large_folder_swiper_vertical">垂直</string>
+    <string name="large_folder_align_flex_start">起始对齐</string>
+    <string name="large_folder_align_flex_end">末端对齐</string>
+    <string name="large_folder_align_center">居中对齐</string>
+    <string name="large_folder_align_space_between">均匀分布</string>
+    <string name="large_folder_align_space_around">环绕分布</string>
     <!-- Quickstep settings -->
-    <string name="quickswitch_ignored_warning">这些设置将被忽略，因为 Lawnchair 未被设置为“最近任务”屏幕提供方</string>
+    <string name="quickswitch_ignored_warning">这些设置将被忽略，因为 LauncherX 未被设置为“最近任务”屏幕提供方</string>
     <string name="quickstep_incompatible">不兼容的系统集成</string>
     <string name="quickstep_incompatible_description">您的设备已配置为使用由 %1$s 提供的系统手势，称为 Quickstep，但此版本的 %1$s 与您的 Android 版本不兼容。要继续使用您的设备，请卸载 %1$s 的更新或禁用 %1$s 作为系统手势提供程序。</string>
     <string name="translucent_background">半透明背景</string>

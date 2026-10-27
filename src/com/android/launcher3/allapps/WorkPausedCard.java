@@ -31,9 +31,9 @@ import com.android.launcher3.Utilities;
 import com.android.launcher3.model.StringCache;
 import com.android.launcher3.views.ActivityContext;
 
-import app.lawnchair.font.FontManager;
-import app.lawnchair.theme.color.tokens.ColorTokens;
-import app.lawnchair.theme.drawable.DrawableTokens;
+import com.jerry.launcherx.font.FontManager;
+import com.jerry.launcherx.theme.color.tokens.ColorTokens;
+import com.jerry.launcherx.theme.drawable.DrawableTokens;
 
 /**
  * Work profile toggle switch shown at the bottom of AllApps work tab

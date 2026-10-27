@@ -119,6 +119,7 @@ import com.android.launcher3.states.StateAnimationConfig;
 import com.android.launcher3.touch.WorkspaceTouchListener;
 import com.android.launcher3.util.EdgeEffectCompat;
 import com.android.launcher3.util.Executors;
+import com.android.launcher3.util.GridOccupancy;
 import com.android.launcher3.util.IntArray;
 import com.android.launcher3.util.IntSet;
 import com.android.launcher3.util.IntSparseArrayMap;
@@ -145,19 +146,21 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import app.lawnchair.hotseat.HotseatPagedView;
-import app.lawnchair.preferences2.PreferenceCacheExtensionsKt;
-import static app.lawnchair.util.LawnchairUtilsKt.toBitmap;
-import app.lawnchair.LawnchairApp;
-import app.lawnchair.LawnchairAppKt;
-import app.lawnchair.preferences.PreferenceManager;
-import app.lawnchair.preferences2.PreferenceManager2;
-import app.lawnchair.smartspace.DoubleShadowTextView;
-import app.lawnchair.smartspace.SmartspaceAppWidgetProvider;
-import app.lawnchair.smartspace.model.LawnchairSmartspace;
-import app.lawnchair.smartspace.model.SmartspaceMode;
-import app.lawnchair.theme.drawable.DrawableTokens;
-import app.lawnchair.util.LawnchairUtilsKt;
+import com.jerry.launcherx.glass.GlassBackdropBridge;
+import com.jerry.launcherx.hotseat.HotseatPagedView;
+import com.jerry.launcherx.modern.folder.LargeFolderView;
+import com.jerry.launcherx.preferences2.PreferenceCacheExtensionsKt;
+import static com.jerry.launcherx.util.LauncherXUtilsKt.toBitmap;
+import com.jerry.launcherx.LauncherXApp;
+import com.jerry.launcherx.LauncherXAppKt;
+import com.jerry.launcherx.preferences.PreferenceManager;
+import com.jerry.launcherx.preferences2.PreferenceManager2;
+import com.jerry.launcherx.smartspace.DoubleShadowTextView;
+import com.jerry.launcherx.smartspace.SmartspaceAppWidgetProvider;
+import com.jerry.launcherx.smartspace.model.LauncherXSmartspace;
+import com.jerry.launcherx.smartspace.model.SmartspaceMode;
+import com.jerry.launcherx.theme.drawable.DrawableTokens;
+import com.jerry.launcherx.util.LauncherXUtilsKt;
 
 /**
  * The workspace is a wide area with a wallpaper and a finite number of pages.
@@ -213,6 +216,21 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
      * CellInfo for the cell that is currently being dragged
      */
     protected CellInfo mDragInfo;
+
+    // LauncherX: batch-drag state. When the user starts dragging an item that is part of the
+    // edit-mode multi-selection, the remaining selected items are captured here so they can
+    // follow the finger during the drag and be moved together with the dragged item on drop.
+    private ArrayList<ItemInfo> mBatchDragItems;
+    private ArrayList<int[]> mBatchDragOriginCells;
+    private ArrayList<View> mBatchDragViews;
+    private boolean mBatchDragFollowing;
+    private float mBatchDragBaseX;
+    private float mBatchDragBaseY;
+    private int mBatchDragOriginCellX = -1;
+    private int mBatchDragOriginCellY = -1;
+
+    /** Duration for a batch-drag follower to glide from the release point into its cell. */
+    private static final long SETTLE_ANIMATION_DURATION = 200L;
 
     /**
      * Target drop area calculated during last acceptDrop call.
@@ -493,6 +511,11 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
         return mWallpaperOffset.wallpaperOffsetForScroll(pageScroll);
     }
 
+    private void syncGlassBackdropWallpaperOffset() {
+        GlassBackdropBridge.setWallpaperOffset(
+                mWallpaperOffset.wallpaperOffsetForScroll(getScrollForWallpaper()));
+    }
+
     /**
      * Returns the number of pages used for the wallpaper parallax.
      */
@@ -516,7 +539,7 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
 
         if (mDragInfo != null && mDragInfo.cell != null) {
             CellLayout layout = (CellLayout) (mDragInfo.cell instanceof LauncherAppWidgetHostView
-                    // LC: https://github.com/LawnchairLauncher/lawnchair/issues/3143
+                    // LC: https://github.com/LauncherXLauncher/lawnchair/issues/3143
                     && dragObject.dragView.getContentViewParent() != null
                     ? dragObject.dragView.getContentViewParent().getParent()
                     : mDragInfo.cell.getParent().getParent());
@@ -595,6 +618,11 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
         if (mAccessibilityDragListener != null) {
             mAccessibilityDragListener.onDragEnd();
         }
+        clearBatchDragFollowers();
+        mBatchDragItems = null;
+        mBatchDragOriginCells = null;
+        mBatchDragOriginCellX = -1;
+        mBatchDragOriginCellY = -1;
         mDragInfo = null;
         mDragSourceInternal = null;
     }
@@ -614,9 +642,9 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
 
     public void updateStatusbarClock() {
         if (mCurrentPage == 0 && PreferenceCacheExtensionsKt.firstCached(mPreferenceManager2.getStatusBarClock())) {
-            LawnchairAppKt.getLawnchairApp(mLauncher).hideClockInStatusBar();
+            LauncherXAppKt.getLauncherXApp(mLauncher).hideClockInStatusBar();
         } else {
-            LawnchairAppKt.getLawnchairApp(mLauncher).restoreClockInStatusBar();
+            LauncherXAppKt.getLauncherXApp(mLauncher).restoreClockInStatusBar();
         }
     }
 
@@ -673,7 +701,7 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
             if (!smartspaceMode.isAvailable(this.mLauncher)) {
                 // The current smartspace mode is not available,
                 // setting the smartspace mode to one that is always available
-                smartspaceMode = LawnchairSmartspace.INSTANCE;
+                smartspaceMode = LauncherXSmartspace.INSTANCE;
                 com.patrykmichalik.opto.core.PreferenceExtensionsKt.setBlocking(mPreferenceManager2.getSmartspaceMode(), smartspaceMode);
             }
             // In transposed layout, we add the first page pinned widget in the Grid.
@@ -1194,19 +1222,20 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         if (shouldSkipPagedViewInterceptionForIconSwipe(ev)) {
             return false;
-        } // Lawnchair: Icon swipe gesture feature
+        } // LauncherX: Icon swipe gesture feature
         if (isTrackpadMultiFingerSwipe(ev)) {
             return false;
         }
         return super.onInterceptTouchEvent(ev);
     }
 
-    // Lawnchair: Icon swipe gesture feature
+    // LauncherX: Icon swipe gesture feature
     private boolean shouldSkipPagedViewInterceptionForIconSwipe(MotionEvent ev) {
         switch (ev.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
-                mDisallowPagedViewInterceptForIconSwipe = isTouchOnIconWithSwipeGesture(
-                        ev.getX(), ev.getY(), false);
+                mDisallowPagedViewInterceptForIconSwipe =
+                        isTouchOnIconWithSwipeGesture(ev.getX(), ev.getY(), false)
+                                || isTouchOnSwiperFolder(ev.getX(), ev.getY());
                 if (mDisallowPagedViewInterceptForIconSwipe) {
                     resetTouchState();
                     return true;
@@ -1230,7 +1259,7 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
         }
     }
 
-    // Lawnchair: Icon swipe gesture feature
+    // LauncherX: Icon swipe gesture feature
     public boolean isTouchOnIconWithSwipeGesture(float x, float y, boolean vertical) {
         boolean hasConfiguredIconSwipeGesture = false;
         BubbleTextView touchedIcon = findIconAtPosition(x, y);
@@ -1244,7 +1273,44 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
         return hasConfiguredIconSwipeGesture;
     }
 
-    // Lawnchair: Icon swipe gesture feature
+    /**
+     * Whether the point is inside an inline large folder that is currently in swiper mode.
+     * Those cards own horizontal and vertical swipes for paging, so the workspace must not
+     * start a page scroll (and the launcher-level gesture controllers must not steal them).
+     */
+    public boolean isTouchOnSwiperFolder(float x, float y) {
+        for (int i = getChildCount() - 1; i >= 0; i--) {
+            View child = getChildAt(i);
+            if (!(child instanceof CellLayout cellLayout)) {
+                continue;
+            }
+            float localX = x - child.getLeft();
+            float localY = y - child.getTop();
+            if (!Utilities.pointInView(cellLayout, localX, localY, 0)) {
+                continue;
+            }
+            ShortcutAndWidgetContainer container = cellLayout.getShortcutsAndWidgets();
+            float containerX = localX - container.getLeft();
+            float containerY = localY - container.getTop();
+            for (int j = container.getChildCount() - 1; j >= 0; j--) {
+                View icon = container.getChildAt(j);
+                if (!(icon instanceof FolderIcon folderIcon) || icon.getVisibility() != VISIBLE) {
+                    continue;
+                }
+                LargeFolderView grid = folderIcon.getInlineGrid();
+                if (grid == null || !grid.getSwiperMode().isSwiper()) {
+                    continue;
+                }
+                if (Utilities.pointInView(icon,
+                        containerX - icon.getLeft(), containerY - icon.getTop(), 0)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    // LauncherX: Icon swipe gesture feature
     private BubbleTextView findIconAtPosition(float x, float y) {
         for (int i = getChildCount() - 1; i >= 0; i--) {
             View child = getChildAt(i);
@@ -1264,7 +1330,7 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
         return null;
     }
 
-    // Lawnchair: Icon swipe gesture feature
+    // LauncherX: Icon swipe gesture feature
     private BubbleTextView findIconInCellLayout(CellLayout cellLayout, float x, float y) {
         ShortcutAndWidgetContainer container = cellLayout.getShortcutsAndWidgets();
         float containerX = x - container.getLeft();
@@ -1503,6 +1569,9 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
         updatePageAlphaValues();
         updatePageScrollValues();
         enableHwLayersOnVisiblePages();
+        // Pages scroll with cached hardware layers, so glass surfaces need an explicit repaint to
+        // re-sample the wallpaper at their new on-screen position.
+        GlassBackdropBridge.refreshSurfaces();
     }
 
     public void showPageIndicatorAtCurrentScroll() {
@@ -1562,6 +1631,7 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
     @Override
     protected void notifyPageSwitchListener(int prevPage) {
         super.notifyPageSwitchListener(prevPage);
+        syncGlassBackdropWallpaperOffset();
         if (prevPage != mCurrentPage) {
             StatsLogManager.EventEnum event = (prevPage < mCurrentPage)
                     ? LAUNCHER_SWIPERIGHT : LAUNCHER_SWIPELEFT;
@@ -1607,6 +1677,7 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
     public void computeScroll() {
         super.computeScroll();
         mWallpaperOffset.syncWithScroll();
+        syncGlassBackdropWallpaperOffset();
     }
 
     @Override
@@ -1675,6 +1746,7 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
             mWallpaperOffset.syncWithScroll();
             mWallpaperOffset.jumpToFinal();
         }
+        syncGlassBackdropWallpaperOffset();
         super.onLayout(changed, left, top, right, bottom);
         updatePageAlphaValues();
     }
@@ -1853,11 +1925,242 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
         page.setAccessibilityDelegate(null);
     }
 
+    /**
+     * LauncherX: captures the remaining members of the edit-mode multi-selection when the drag
+     * starts, so they can follow the dragged item on drop.
+     */
+    private void captureBatchDrag(ItemInfo dragged, int anchorCellX, int anchorCellY) {
+        mBatchDragItems = null;
+        mBatchDragOriginCells = null;
+        mBatchDragViews = null;
+        mBatchDragFollowing = false;
+        mBatchDragOriginCellX = -1;
+        mBatchDragOriginCellY = -1;
+        if (mLauncher == null || !mLauncher.isInState(EDIT_MODE)) {
+            return;
+        }
+        final com.jerry.launcherx.views.EditModeSelection selection = mLauncher.getEditModeSelection();
+        if (selection == null || selection.getSize() < 2 || !selection.isSelected(dragged)) {
+            return;
+        }
+        final ArrayList<ItemInfo> items = new ArrayList<>();
+        final ArrayList<int[]> cells = new ArrayList<>();
+        final ArrayList<View> views = new ArrayList<>();
+        for (ItemInfo item : selection.items()) {
+            if (item.id == dragged.id || item.container != CONTAINER_DESKTOP) {
+                continue;
+            }
+            final View child = getViewByItemId(item.id);
+            if (child == null || !(child.getLayoutParams() instanceof CellLayoutLayoutParams)) {
+                continue;
+            }
+            final CellLayoutLayoutParams lp = (CellLayoutLayoutParams) child.getLayoutParams();
+            items.add(item);
+            cells.add(new int[]{lp.getCellX(), lp.getCellY()});
+            views.add(child);
+        }
+        if (items.isEmpty()) {
+            return;
+        }
+        mBatchDragItems = items;
+        mBatchDragOriginCells = cells;
+        mBatchDragViews = views;
+        mBatchDragOriginCellX = anchorCellX;
+        mBatchDragOriginCellY = anchorCellY;
+        if (mLauncher.getDragController() != null) {
+            mLauncher.getDragController().setOnDragMoveListener(this::updateBatchDragFollowers);
+        }
+    }
+
+    /**
+     * LauncherX: translates every captured multi-selection icon by the same offset as the drag
+     * view, so the whole group appears to move with the finger. The baseline is taken from the
+     * first move so the group does not jump by the drag view's initial registration offset.
+     */
+    private void updateBatchDragFollowers(float translationX, float translationY) {
+        if (mBatchDragViews == null || mBatchDragViews.isEmpty()) {
+            return;
+        }
+        if (!mBatchDragFollowing) {
+            mBatchDragBaseX = translationX;
+            mBatchDragBaseY = translationY;
+            mBatchDragFollowing = true;
+            return;
+        }
+        final float dx = translationX - mBatchDragBaseX;
+        final float dy = translationY - mBatchDragBaseY;
+        for (int i = 0; i < mBatchDragViews.size(); i++) {
+            final View view = mBatchDragViews.get(i);
+            view.setTranslationX(dx);
+            view.setTranslationY(dy);
+        }
+    }
+
+    /** LauncherX: drops the follower translations and stops tracking the drag view. */
+    private void clearBatchDragFollowers() {
+        if (mBatchDragViews != null) {
+            for (View view : mBatchDragViews) {
+                view.setTranslationX(0f);
+                view.setTranslationY(0f);
+            }
+        }
+        mBatchDragViews = null;
+        mBatchDragFollowing = false;
+        if (mLauncher != null && mLauncher.getDragController() != null) {
+            mLauncher.getDragController().setOnDragMoveListener(null);
+        }
+    }
+
+    /**
+     * LauncherX: after the dragged item of a multi-selection has been dropped at its target cell,
+     * shift every other selected item on the same page by the same offset, preserving the group
+     * layout. Items whose destination is out of bounds or occupied are left where they are.
+     */
+    private void applyBatchDragMove(CellLayout dropTargetLayout, int screenId, int[] anchorTarget,
+            ItemInfo draggedInfo) {
+        if (mBatchDragItems == null || mBatchDragItems.isEmpty() || dropTargetLayout == null
+                || mBatchDragOriginCellX < 0 || mBatchDragOriginCellY < 0) {
+            return;
+        }
+        final int dx = anchorTarget[0] - mBatchDragOriginCellX;
+        final int dy = anchorTarget[1] - mBatchDragOriginCellY;
+        if (dx == 0 && dy == 0) {
+            return;
+        }
+        final GridOccupancy occupancy = dropTargetLayout.cloneGridOccupancy();
+        final int countX = dropTargetLayout.getCountX();
+        final int countY = dropTargetLayout.getCountY();
+
+        final ArrayList<View> views = new ArrayList<>();
+        final ArrayList<ItemInfo> infos = new ArrayList<>();
+        final ArrayList<int[]> targets = new ArrayList<>();
+        final ArrayList<View> pendingViews = new ArrayList<>();
+        final ArrayList<ItemInfo> pendingInfos = new ArrayList<>();
+        for (int i = 0; i < mBatchDragItems.size(); i++) {
+            final ItemInfo item = mBatchDragItems.get(i);
+            if (item == draggedInfo) {
+                continue;
+            }
+            final View child = getViewByItemId(item.id);
+            if (child == null || !(child.getLayoutParams() instanceof CellLayoutLayoutParams)) {
+                continue;
+            }
+            final CellLayoutLayoutParams lp = (CellLayoutLayoutParams) child.getLayoutParams();
+            if (getParentCellLayoutForView(child) != dropTargetLayout) {
+                continue;
+            }
+            final int[] origin = mBatchDragOriginCells.get(i);
+            final int nx = origin[0] + dx;
+            final int ny = origin[1] + dy;
+            occupancy.markCells(lp.getCellX(), lp.getCellY(), lp.cellHSpan, lp.cellVSpan, false);
+            if (nx < 0 || ny < 0 || nx + lp.cellHSpan > countX || ny + lp.cellVSpan > countY
+                    || !occupancy.isRegionVacant(nx, ny, lp.cellHSpan, lp.cellVSpan)) {
+                // Rigid shift is blocked here: pack it later, in reading order.
+                pendingViews.add(child);
+                pendingInfos.add(item);
+                continue;
+            }
+            occupancy.markCells(nx, ny, lp.cellHSpan, lp.cellVSpan, true);
+            views.add(child);
+            infos.add(item);
+            targets.add(new int[]{nx, ny, lp.cellHSpan, lp.cellVSpan});
+        }
+
+        // Fallback: lay the leftovers into the first free cells, reading order from the drop cell.
+        for (int i = 0; i < pendingViews.size(); i++) {
+            final View child = pendingViews.get(i);
+            final CellLayoutLayoutParams lp = (CellLayoutLayoutParams) child.getLayoutParams();
+            final int[] cell = findNearestVacant(occupancy, countX, countY, anchorTarget[0],
+                    anchorTarget[1], lp.cellHSpan, lp.cellVSpan);
+            if (cell == null) {
+                continue;
+            }
+            occupancy.markCells(cell[0], cell[1], lp.cellHSpan, lp.cellVSpan, true);
+            views.add(child);
+            infos.add(pendingInfos.get(i));
+            targets.add(new int[]{cell[0], cell[1], lp.cellHSpan, lp.cellVSpan});
+        }
+
+        for (int i = 0; i < views.size(); i++) {
+            final int[] target = targets.get(i);
+            final View child = views.get(i);
+            // The follower was translated to follow the finger; capture where it currently is
+            // so it can glide from there into its target cell instead of jumping to the finger.
+            final float fromX = child.getX();
+            final float fromY = child.getY();
+            final CellLayout parent = getParentCellLayoutForView(child);
+            if (parent != null) {
+                parent.removeView(child);
+            }
+            addInScreen(child, CONTAINER_DESKTOP, screenId, target[0], target[1],
+                    target[2], target[3]);
+            dropTargetLayout.onDropChild(child);
+            mLauncher.getModelWriter().modifyItemInDatabase(infos.get(i), CONTAINER_DESKTOP,
+                    screenId, target[0], target[1], target[2], target[3]);
+            child.setTranslationX(0f);
+            child.setTranslationY(0f);
+            child.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+                @Override
+                public void onLayoutChange(View v, int left, int top, int right, int bottom,
+                        int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                    v.removeOnLayoutChangeListener(this);
+                    v.setTranslationX(fromX - v.getLeft());
+                    v.setTranslationY(fromY - v.getTop());
+                    v.animate().translationX(0f).translationY(0f)
+                            .setDuration(SETTLE_ANIMATION_DURATION).start();
+                }
+            });
+        }
+
+        // The moved followers animate themselves into place above; release the remaining
+        // followers (e.g. items on another page) so they do not stay offset, and stop
+        // onDragEnd from snapping the ones we just animated.
+        if (mBatchDragViews != null) {
+            for (View follower : mBatchDragViews) {
+                if (!views.contains(follower)) {
+                    follower.setTranslationX(0f);
+                    follower.setTranslationY(0f);
+                }
+            }
+            mBatchDragViews = null;
+        }
+    }
+
+    /**
+     * LauncherX: finds the first grid cell that can host a {@code spanX} x {@code spanY} item,
+     * scanning in reading order from {@code (startX, startY)} and wrapping to the top.
+     */
+    private int[] findNearestVacant(GridOccupancy occupancy, int countX, int countY,
+            int startX, int startY, int spanX, int spanY) {
+        for (int y = Math.max(0, startY); y < countY; y++) {
+            final int xFrom = (y == startY) ? Math.max(0, startX) : 0;
+            for (int x = xFrom; x < countX; x++) {
+                if (x + spanX <= countX && y + spanY <= countY
+                        && occupancy.isRegionVacant(x, y, spanX, spanY)) {
+                    return new int[]{x, y};
+                }
+            }
+        }
+        for (int y = 0; y < Math.min(countY, Math.max(0, startY)); y++) {
+            for (int x = 0; x < countX; x++) {
+                if (x + spanX <= countX && y + spanY <= countY
+                        && occupancy.isRegionVacant(x, y, spanX, spanY)) {
+                    return new int[]{x, y};
+                }
+            }
+        }
+        return null;
+    }
+
     public void startDrag(CellInfo cellInfo, DragOptions options) {
         View child = cellInfo.cell;
 
         mDragInfo = cellInfo;
         child.setVisibility(INVISIBLE);
+
+        if (child.getTag() instanceof ItemInfo) {
+            captureBatchDrag((ItemInfo) child.getTag(), mDragInfo.cellX, mDragInfo.cellY);
+        }
 
         if (options.isAccessibleDrag) {
             mAccessibilityDragListener =
@@ -2303,11 +2606,16 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
 
                 // When quickly moving an item, a user may accidentally rearrange their
                 // workspace. So instead we move the icon back safely to its original position.
-                boolean returnToOriginalCellToPreventShuffling = !isFinishedSwitchingState()
+                // A full dock has no free cell at all: reject the drop, return the item to where
+                // it came from and tell the user the dock is full.
+                boolean hotseatFull = isHotseatDropWithoutSpace(d, dropTargetLayout, spanX,
+                        spanY);
+                boolean returnToOriginalCellToPreventShuffling = !hotseatFull
+                        && !isFinishedSwitchingState()
                         && !droppedOnOriginalCellDuringTransition && !dropTargetLayout
                         .isRegionVacant(mTargetCell[0], mTargetCell[1], spanX, spanY);
                 int[] resultSpan = new int[2];
-                if (returnToOriginalCellToPreventShuffling) {
+                if (hotseatFull || returnToOriginalCellToPreventShuffling) {
                     mTargetCell[0] = mTargetCell[1] = -1;
                 } else {
                     mTargetCell = dropTargetLayout.performReorder((int) mDragViewVisualCenter[0],
@@ -2372,6 +2680,12 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
                     }
                     mLauncher.getModelWriter().modifyItemInDatabase(info, container, screenId,
                             lp.getCellX(), lp.getCellY(), item.spanX, item.spanY);
+
+                    // LauncherX: if the dragged item was part of an edit-mode multi-selection,
+                    // move the remaining selected items together with it.
+                    if (container == CONTAINER_DESKTOP) {
+                        applyBatchDragMove(dropTargetLayout, screenId, mTargetCell, info);
+                    }
                 } else {
                     if (!returnToOriginalCellToPreventShuffling) {
                         onNoCellFound(dropTargetLayout, d.dragInfo, d.logInstanceId);
@@ -2488,7 +2802,7 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
     public void onNoCellFound(
             View dropTargetLayout, ItemInfo itemInfo, @Nullable InstanceId logInstanceId) {
         int strId = mLauncher.isHotseatLayout(dropTargetLayout)
-                ? R.string.hotseat_out_of_space : R.string.out_of_space;
+                ? R.string.dock_is_full : R.string.out_of_space;
         Toast.makeText(mLauncher, mLauncher.getString(strId), Toast.LENGTH_SHORT).show();
         StatsLogManager.StatsLogger logger = mStatsLogManager.logger().withItemInfo(itemInfo);
         if (logInstanceId != null) {
@@ -2777,6 +3091,13 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
             mDragTargetLayout.performReorder((int) mDragViewVisualCenter[0],
                     (int) mDragViewVisualCenter[1], minSpanX, minSpanY, item.spanX, item.spanY,
                     child, mTargetCell, new int[2], CellLayout.MODE_SHOW_REORDER_HINT);
+            // LauncherX: the dock is a single row that is usually full, so it takes the
+            // "occupied" branch and never paints the target cell. Draw the outline here too so
+            // dragging an item over the dock still shows which cell it will snap to.
+            if (mLauncher.isHotseatLayout(mDragTargetLayout)) {
+                mDragTargetLayout.visualizeDropLocation(mTargetCell[0], mTargetCell[1],
+                        item.spanX, item.spanY, d);
+            }
             // Otherwise, if we aren't adding to or creating a folder and there's no pending
             // reorder, then we schedule a reorder
             ReorderAlarmListener listener = new ReorderAlarmListener(mDragViewVisualCenter,
@@ -2848,15 +3169,37 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
     }
 
     private boolean shouldUseHotseatAsDropLayout(DragObject dragObject) {
-        // LC-Note: isDragWidget(dragObject) being removed is intended to make placing widget on dock possible 
-        
-        if (mLauncher.getHotseat() == null
-                || mLauncher.getHotseat().getShortcutsAndWidgets() == null) {
+        Hotseat hotseat = mLauncher.getHotseat();
+        if (hotseat == null) {
             return false;
         }
-        View hotseatIcons = mLauncher.getHotseat().getPagedView();
+        // Use the icon row rather than the full dock band. The dock pager spans the whole dock
+        // area (including the capsule margins), so testing against it stole the bottom workspace
+        // row: an app dropped just above the icons was treated as a dock drop and bounced back
+        // into the dock instead of moving out to the desktop.
+        CellLayout page = hotseat.getCurrentPageLayout();
+        View hotseatIcons = page != null ? page.getShortcutsAndWidgets()
+                : hotseat.getPagedView();
+        if (hotseatIcons == null) {
+            return false;
+        }
         getViewBoundsRelativeToWorkspace(hotseatIcons, mTempRect);
         return mTempRect.contains(dragObject.x, dragObject.y);
+    }
+
+    /**
+     * True when {@code layout} is the dock, the dragged item does not already live in the dock,
+     * and the dock has no vacant cell for it. Reordering an existing dock item is still allowed.
+     */
+    private boolean isHotseatDropWithoutSpace(DragObject d, CellLayout layout, int spanX,
+            int spanY) {
+        if (layout == null || !mLauncher.isHotseatLayout(layout)) {
+            return false;
+        }
+        if (d.dragInfo != null && d.dragInfo.container == CONTAINER_HOTSEAT) {
+            return false;
+        }
+        return !layout.findCellForSpan(new int[2], spanX, spanY);
     }
 
     private boolean isDragObjectOverSmartSpace(DragObject dragObject) {
@@ -3163,6 +3506,11 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
                         true)) {
                     return;
                 }
+            }
+
+            if (isHotseatDropWithoutSpace(d, cellLayout, spanX, spanY)) {
+                onNoCellFound(cellLayout, info, d.logInstanceId);
+                return;
             }
 
             if (touchXY != null) {

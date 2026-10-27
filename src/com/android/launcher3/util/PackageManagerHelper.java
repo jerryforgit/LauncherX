@@ -142,12 +142,12 @@ public class PackageManagerHelper {
         }
     }
 
-    // Lawnchair
+    // LauncherX
     public static Intent getStyleWallpapersIntent(Context context) {
         return getStyleWallpapersAltIntent(context);
     }
 
-    // Lawnchair
+    // LauncherX
     public static Intent getStyleWallpapersAltIntent(Context context) {
         return new Intent(Intent.ACTION_SET_WALLPAPER).setComponent(
             new ComponentName(context.getString(R.string.wallpaper_picker_package_alt),

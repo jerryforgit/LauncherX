@@ -183,7 +183,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
-import app.lawnchair.compat.LawnchairQuickstepCompat;
+import com.jerry.launcherx.compat.LauncherXQuickstepCompat;
 
 /**
  * Manages the opening and closing app transitions from Launcher
@@ -362,11 +362,11 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
 
         long statusBarTransitionDelay = duration - STATUS_BAR_TRANSITION_DURATION
                 - STATUS_BAR_TRANSITION_PRE_DELAY;
-        ActivityOptions options = LawnchairQuickstepCompat.getActivityOptionsCompat().makeRemoteAnimation(
+        ActivityOptions options = LauncherXQuickstepCompat.getActivityOptionsCompat().makeRemoteAnimation(
                 new RemoteAnimationAdapter(runner, duration, statusBarTransitionDelay),
-                LawnchairQuickstepCompat.getRemoteTransitionCompat().getRemoteTransition(runner.toRemoteTransition(),
+                LauncherXQuickstepCompat.getRemoteTransitionCompat().getRemoteTransition(runner.toRemoteTransition(),
                         mLauncher.getIApplicationThread(), "QuickstepLaunch"),
-                "Lawnchair");
+                "LauncherX");
         IRemoteCallback endCallback = completeRunnableListCallback(onEndCallback, mLauncher);
         options.setOnAnimationAbortListener(endCallback);
         options.setOnAnimationFinishedListener(endCallback);
@@ -712,6 +712,20 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
                 wallpaperTargets, nonAppTargets, MODE_OPENING);
         int rotationChange = getRotationChange(appTargets);
         Rect windowTargetBounds = getWindowTargetBounds(appTargets, rotationChange);
+
+        com.jerry.launcherx.views.overlay.FullScreenOverlayMode openingMode =
+                com.jerry.launcherx.preferences2.PreferenceCacheExtensionsKt.firstCached(
+                        com.jerry.launcherx.preferences2.PreferenceManager2.getInstance(mLauncher)
+                                .getOpeningAppOverlay());
+        if (openingMode == com.jerry.launcherx.views.overlay.FullScreenOverlayMode.FADE_IN) {
+            return getOpeningFadeInAnimator(v, appTargets, wallpaperTargets, nonAppTargets,
+                    launcherClosing, openingTargets, windowTargetBounds);
+        }
+        if (openingMode == com.jerry.launcherx.views.overlay.FullScreenOverlayMode.SUCK_IN) {
+            return getOpeningSuckInAnimator(v, appTargets, wallpaperTargets, nonAppTargets,
+                    launcherClosing, openingTargets, windowTargetBounds);
+        }
+
         final int[] bottomInsetPos = new int[]{
                 mSystemUiProxy.getHomeVisibilityState().getNavbarInsetPosition()};
         final RemoteAnimationTarget target = openingTargets.getFirstAppTarget();
@@ -755,7 +769,8 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
 
         AnimOpenProperties prop = new AnimOpenProperties(mLauncher.getResources(), mDeviceProfile,
                 windowTargetBounds, launcherIconBounds, v, dragLayerBounds[0], dragLayerBounds[1],
-                hasSplashScreen, floatingView.isDifferentFromAppIcon());
+                hasSplashScreen, floatingView.isDifferentFromAppIcon(),
+                openingMode == com.jerry.launcherx.views.overlay.FullScreenOverlayMode.SUCK_IN);
         int left = prop.cropCenterXStart - prop.cropWidthStart / 2;
         int top = prop.cropCenterYStart - prop.cropHeightStart / 2;
         int right = left + prop.cropWidthStart;
@@ -853,7 +868,8 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
                     AnimOpenProperties prop = new AnimOpenProperties(mLauncher.getResources(),
                             mDeviceProfile, windowTargetBounds, launcherIconBounds, v,
                             dragLayerBounds[0], dragLayerBounds[1], hasSplashScreen,
-                            floatingView.isDifferentFromAppIcon());
+                            floatingView.isDifferentFromAppIcon(),
+                            openingMode == com.jerry.launcherx.views.overlay.FullScreenOverlayMode.SUCK_IN);
                     mCropRectCenterY = new FloatProp(prop.cropCenterYStart, prop.cropCenterYEnd,
                             mOpeningInterpolator);
                     mCropRectHeight = new FloatProp(prop.cropHeightStart, prop.cropHeightEnd,
@@ -998,6 +1014,255 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
 
         // If app targets are translucent, do not animate the background as it causes a visible
         // flicker when it resets itself at the end of its animation.
+        if (appTargetsAreTranslucent || !launcherClosing) {
+            animatorSet.play(appAnimator);
+        } else {
+            animatorSet.playTogether(appAnimator, getBackgroundAnimator());
+        }
+        return animatorSet;
+    }
+
+    /**
+     * Simple fade-in opening animation: the app window fades in at its full bounds
+     * without the icon-to-window morph.
+     */
+    private Animator getOpeningFadeInAnimator(View v,
+            RemoteAnimationTarget[] appTargets,
+            RemoteAnimationTarget[] wallpaperTargets,
+            RemoteAnimationTarget[] nonAppTargets,
+            boolean launcherClosing,
+            RemoteAnimationTargets openingTargets,
+            Rect windowTargetBounds) {
+        boolean appTargetsAreTranslucent = areAllTargetsTranslucent(appTargets);
+
+        RectF launcherIconBounds = new RectF();
+        FloatingIconView floatingView = getFloatingIconView(mLauncher, v,
+                (mLauncher.getTaskbarUIController() == null || !isTransientTaskbar(mLauncher))
+                        ? null
+                        : mLauncher.getTaskbarUIController().findMatchingView(v),
+                null /* fadeOutView */, !appTargetsAreTranslucent, launcherIconBounds,
+                true /* isOpening */);
+        SurfaceTransactionApplier surfaceApplier =
+                new SurfaceTransactionApplier(floatingView);
+        openingTargets.addReleaseCheck(surfaceApplier);
+        RemoteAnimationTarget navBarTarget = openingTargets.getNavBarRemoteAnimationTarget();
+
+        final int[] dragLayerBounds = new int[2];
+        mDragLayer.getLocationOnScreen(dragLayerBounds);
+
+        final float finalWindowRadius = mDeviceProfile.getDeviceProperties().isMultiWindowMode()
+                ? 0 : getWindowCornerRadius(mLauncher);
+        final float finalShadowRadius = appTargetsAreTranslucent ? 0 : mMaxShadowRadius;
+
+        final Rect crop = new Rect(windowTargetBounds);
+        crop.offsetTo(0, 0);
+        final Matrix matrix = new Matrix();
+        final Point tmpPos = new Point();
+
+        AnimatorSet animatorSet = new AnimatorSet();
+        ValueAnimator appAnimator = ValueAnimator.ofFloat(0, 1);
+        appAnimator.setDuration(APP_LAUNCH_DURATION);
+        appAnimator.setInterpolator(DECELERATE_1_5);
+        appAnimator.addListener(floatingView);
+        appAnimator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                if (v instanceof BubbleTextView) {
+                    ((BubbleTextView) v).setStayPressed(false);
+                }
+                openingTargets.release();
+            }
+        });
+
+        MultiValueUpdateListener listener = new MultiValueUpdateListener() {
+            FloatProp mWindowAlpha = new FloatProp(0f, 1f, DECELERATE_1_5);
+            FloatProp mIconAlpha = new FloatProp(1f, 0f,
+                    clampToDuration(LINEAR, 0, APP_LAUNCH_DURATION / 3,
+                            APP_LAUNCH_DURATION));
+
+            @Override
+            public void onUpdate(float percent, boolean initOnly) {
+                // Floating icon: show at icon bounds and fade out quickly.
+                RectF floatingIconBounds = new RectF(launcherIconBounds);
+                floatingIconBounds.offset(dragLayerBounds[0], dragLayerBounds[1]);
+                floatingView.update(mIconAlpha.value, floatingIconBounds, percent, 0f,
+                        finalWindowRadius, true /* isOpening */);
+
+                if (initOnly) {
+                    return;
+                }
+
+                SurfaceTransaction transaction = new SurfaceTransaction();
+                for (int i = appTargets.length - 1; i >= 0; i--) {
+                    RemoteAnimationTarget target = appTargets[i];
+                    SurfaceProperties builder = transaction.forSurface(target.leash);
+                    if (target.mode == MODE_OPENING) {
+                        if (target.localBounds != null) {
+                            tmpPos.set(target.localBounds.left, target.localBounds.top);
+                        } else {
+                            tmpPos.set(target.position.x, target.position.y);
+                        }
+                        matrix.setTranslate(tmpPos.x, tmpPos.y);
+                        builder.setMatrix(matrix)
+                                .setWindowCrop(crop)
+                                .setAlpha(mWindowAlpha.value)
+                                .setCornerRadius(finalWindowRadius)
+                                .setShadowRadius(finalShadowRadius);
+                    } else if (target.mode == MODE_CLOSING) {
+                        if (target.localBounds != null) {
+                            tmpPos.set(target.localBounds.left, target.localBounds.top);
+                        } else {
+                            tmpPos.set(target.position.x, target.position.y);
+                        }
+                        final Rect closingCrop = new Rect(target.screenSpaceBounds);
+                        closingCrop.offsetTo(0, 0);
+                        matrix.setTranslate(tmpPos.x, tmpPos.y);
+                        builder.setMatrix(matrix)
+                                .setWindowCrop(closingCrop)
+                                .setAlpha(1f);
+                    }
+                }
+
+                if (navBarTarget != null) {
+                    transaction.forSurface(navBarTarget.leash).setAlpha(1f);
+                }
+                surfaceApplier.scheduleApply(transaction);
+            }
+        };
+        appAnimator.addUpdateListener(listener);
+        listener.onUpdate(0, true /* initOnly */);
+
+        if (appTargetsAreTranslucent || !launcherClosing) {
+            animatorSet.play(appAnimator);
+        } else {
+            animatorSet.playTogether(appAnimator, getBackgroundAnimator());
+        }
+        return animatorSet;
+    }
+
+    private Animator getOpeningSuckInAnimator(View v,
+            RemoteAnimationTarget[] appTargets,
+            RemoteAnimationTarget[] wallpaperTargets,
+            RemoteAnimationTarget[] nonAppTargets,
+            boolean launcherClosing,
+            RemoteAnimationTargets openingTargets,
+            Rect windowTargetBounds) {
+        boolean appTargetsAreTranslucent = areAllTargetsTranslucent(appTargets);
+
+        RectF launcherIconBounds = new RectF();
+        FloatingIconView floatingView = getFloatingIconView(mLauncher, v,
+                (mLauncher.getTaskbarUIController() == null || !isTransientTaskbar(mLauncher))
+                        ? null
+                        : mLauncher.getTaskbarUIController().findMatchingView(v),
+                null /* fadeOutView */, !appTargetsAreTranslucent, launcherIconBounds,
+                true /* isOpening */);
+        SurfaceTransactionApplier surfaceApplier =
+                new SurfaceTransactionApplier(floatingView);
+        openingTargets.addReleaseCheck(surfaceApplier);
+        RemoteAnimationTarget navBarTarget = openingTargets.getNavBarRemoteAnimationTarget();
+
+        final int[] dragLayerBounds = new int[2];
+        mDragLayer.getLocationOnScreen(dragLayerBounds);
+
+        final float finalWindowRadius = mDeviceProfile.getDeviceProperties().isMultiWindowMode()
+                ? 0 : getWindowCornerRadius(mLauncher);
+        final float finalShadowRadius = appTargetsAreTranslucent ? 0 : mMaxShadowRadius;
+
+        final Rect crop = new Rect(windowTargetBounds);
+        crop.offsetTo(0, 0);
+        final Matrix matrix = new Matrix();
+        final Point tmpPos = new Point();
+
+        // Compute scale from icon bounds to full window bounds.
+        final float iconCenterX = launcherIconBounds.centerX() + dragLayerBounds[0];
+        final float iconCenterY = launcherIconBounds.centerY() + dragLayerBounds[1];
+        final float windowCenterX = windowTargetBounds.centerX();
+        final float windowCenterY = windowTargetBounds.centerY();
+        final float iconW = Math.max(1f, launcherIconBounds.width());
+        final float iconH = Math.max(1f, launcherIconBounds.height());
+        final float startScaleX = iconW / windowTargetBounds.width();
+        final float startScaleY = iconH / windowTargetBounds.height();
+        final float startScale = Math.max(startScaleX, startScaleY);
+
+        AnimatorSet animatorSet = new AnimatorSet();
+        ValueAnimator appAnimator = ValueAnimator.ofFloat(0, 1);
+        appAnimator.setDuration(APP_LAUNCH_DURATION);
+        appAnimator.setInterpolator(DECELERATE_1_5);
+        appAnimator.addListener(floatingView);
+        appAnimator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                if (v instanceof BubbleTextView) {
+                    ((BubbleTextView) v).setStayPressed(false);
+                }
+                openingTargets.release();
+            }
+        });
+
+        MultiValueUpdateListener listener = new MultiValueUpdateListener() {
+            FloatProp mScale = new FloatProp(startScale, 1f, DECELERATE_1_5);
+            FloatProp mTransX = new FloatProp(
+                    iconCenterX - windowCenterX, 0f, DECELERATE_1_5);
+            FloatProp mTransY = new FloatProp(
+                    iconCenterY - windowCenterY, 0f, DECELERATE_1_5);
+            FloatProp mIconAlpha = new FloatProp(1f, 0f,
+                    clampToDuration(LINEAR, 0, APP_LAUNCH_DURATION / 3,
+                            APP_LAUNCH_DURATION));
+
+            @Override
+            public void onUpdate(float percent, boolean initOnly) {
+                RectF floatingIconBounds = new RectF(launcherIconBounds);
+                floatingIconBounds.offset(dragLayerBounds[0], dragLayerBounds[1]);
+                floatingView.update(mIconAlpha.value, floatingIconBounds, percent, 0f,
+                        finalWindowRadius, true /* isOpening */);
+
+                if (initOnly) {
+                    return;
+                }
+
+                SurfaceTransaction transaction = new SurfaceTransaction();
+                for (int i = appTargets.length - 1; i >= 0; i--) {
+                    RemoteAnimationTarget target = appTargets[i];
+                    SurfaceProperties builder = transaction.forSurface(target.leash);
+                    if (target.mode == MODE_OPENING) {
+                        if (target.localBounds != null) {
+                            tmpPos.set(target.localBounds.left, target.localBounds.top);
+                        } else {
+                            tmpPos.set(target.position.x, target.position.y);
+                        }
+                        matrix.setScale(mScale.value, mScale.value);
+                        matrix.postTranslate(
+                                tmpPos.x + mTransX.value * mScale.value,
+                                tmpPos.y + mTransY.value * mScale.value);
+                        builder.setMatrix(matrix)
+                                .setWindowCrop(crop)
+                                .setAlpha(1f)
+                                .setCornerRadius(finalWindowRadius)
+                                .setShadowRadius(finalShadowRadius);
+                    } else if (target.mode == MODE_CLOSING) {
+                        if (target.localBounds != null) {
+                            tmpPos.set(target.localBounds.left, target.localBounds.top);
+                        } else {
+                            tmpPos.set(target.position.x, target.position.y);
+                        }
+                        final Rect closingCrop = new Rect(target.screenSpaceBounds);
+                        closingCrop.offsetTo(0, 0);
+                        matrix.setTranslate(tmpPos.x, tmpPos.y);
+                        builder.setMatrix(matrix)
+                                .setWindowCrop(closingCrop)
+                                .setAlpha(1f);
+                    }
+                }
+
+                if (navBarTarget != null) {
+                    transaction.forSurface(navBarTarget.leash).setAlpha(1f);
+                }
+                surfaceApplier.scheduleApply(transaction);
+            }
+        };
+        appAnimator.addUpdateListener(listener);
+        listener.onUpdate(0, true /* initOnly */);
+
         if (appTargetsAreTranslucent || !launcherClosing) {
             animatorSet.play(appAnimator);
         } else {
@@ -1235,7 +1500,7 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
         }
 
         mWallpaperOpenTransitionRunner = new WallpaperOpenLauncherAnimationRunner();
-        mLauncherOpenTransition = LawnchairQuickstepCompat.getRemoteTransitionCompat().getRemoteTransition(
+        mLauncherOpenTransition = LauncherXQuickstepCompat.getRemoteTransitionCompat().getRemoteTransition(
                 new LauncherAnimationRunner(mHandler, mWallpaperOpenTransitionRunner,
                         false /* startAtFrontOfQueue */).toRemoteTransition(),
                 mLauncher.getIApplicationThread(), "QuickstepLaunchHome");
@@ -1362,7 +1627,7 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
     private static int getRotationChange(RemoteAnimationTarget[] appTargets) {
         int rotationChange = 0;
         for (RemoteAnimationTarget target : appTargets) {
-            // LC: https://github.com/LawnchairLauncher/lawnchair/pull/3776
+            // LC: https://github.com/LauncherXLauncher/lawnchair/pull/3776
             try {
                 if (Math.abs(target.rotationChange) > Math.abs(rotationChange)) {
                     rotationChange = target.rotationChange;
@@ -1435,7 +1700,7 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
         float secondaryDimension = orientationHandler
                 .getSecondaryValue(dp.getDeviceProperties().getAvailableWidthPx(), dp.getDeviceProperties().getAvailableHeightPx());
         final float targetX = primaryDimension / 2f;
-        final float targetY = secondaryDimension - dp.hotseatBarSizePx;
+        final float targetY = secondaryDimension / 2f;
         return new RectF(targetX - halfIconSize, targetY - halfIconSize,
                 targetX + halfIconSize, targetY + halfIconSize);
     }
@@ -2181,7 +2446,7 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
 
         AnimOpenProperties(Resources r, DeviceProfile dp, Rect windowTargetBounds,
                 RectF launcherIconBounds, View view, int dragLayerLeft, int dragLayerTop,
-                boolean hasSplashScreen, boolean hasDifferentAppIcon) {
+                boolean hasSplashScreen, boolean hasDifferentAppIcon, boolean forceNoFade) {
             // Scale the app icon to take up the entire screen. This simplifies the math when
             // animating the app window position / scale.
             float smallestSize = Math.min(windowTargetBounds.height(), windowTargetBounds.width());
@@ -2205,7 +2470,7 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
             dX = centerX - launcherIconBounds.centerX();
             dY = centerY - launcherIconBounds.centerY();
 
-            iconAlphaStart = hasSplashScreen && !hasDifferentAppIcon ? 0 : 1f;
+            iconAlphaStart = (forceNoFade || (hasSplashScreen && !hasDifferentAppIcon)) ? 0 : 1f;
 
             final int windowIconSize = ResourceUtils.getDimenByName("starting_surface_icon_size",
                     r, 108);

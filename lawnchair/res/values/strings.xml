@@ -35,6 +35,7 @@
 
     <string name="action_apply">Apply</string>
     <string name="action_customize">Customize</string>
+    <string name="action_hide_dock_search">Turn off search bar</string>
 
     <string name="always_choice">Always</string>
     <string name="never_choice">Never</string>
@@ -73,7 +74,7 @@
     <string name="time_months_ago">%dmo</string>
     <string name="time_years_ago">%dy</string>
 
-    <string name="managed_by_lawnchair">Managed by Lawnchair</string>
+    <string name="managed_by_lawnchair">Managed by LauncherX</string>
 
     <!-- When mentioning settings UI -->
     <string name="smartspace_preferences">Preferences</string>
@@ -143,7 +144,7 @@
     <string name="sort_active_items_action">Sort active items</string>
 
     <!-- A11y description -->
-    <string name="accessibility_service_description">To perform certain actions when you use a gesture, such as locking your phone, Lawnchair requires accessibility access.\n\nLawnchair doesn\'t watch your actions, though all accessibility services require this privilege. Lawnchair discards any event sent by the system.\n\nTo lock your phone or open the Recents screen, Lawnchair uses the performGlobalAction accessibility service.</string>
+    <string name="accessibility_service_description">To perform certain actions when you use a gesture, such as locking your phone, LauncherX requires accessibility access.\n\nLauncherX doesn\'t watch your actions, though all accessibility services require this privilege. LauncherX discards any event sent by the system.\n\nTo lock your phone or open the Recents screen, LauncherX uses the performGlobalAction accessibility service.</string>
 
     <string name="iconPackPackageDefault" translatable="false">""</string>
 
@@ -187,6 +188,7 @@
     <string name="drawer_search_description">Web suggestions, global search</string>
 
     <string name="folders_label">Folders</string>
+    <string name="folder_desktop_label">Desktop label</string>
     <string name="folders_description">Row and column count</string>
 
     <string name="gestures_label">Gestures</string>
@@ -201,7 +203,7 @@
     <string name="about_label">About</string>
 
     <string name="app_info_drop_target_label">App info</string>
-    <string name="debug_restart_launcher">Restart Lawnchair</string>
+    <string name="debug_restart_launcher">Restart LauncherX</string>
     <string name="experimental_features_label">Experimental features</string>
 
     <!-- Experimental features -->
@@ -251,6 +253,7 @@
 
     <!--Overlay-->
     <string name="app_closing_animation">App closing animation</string>
+    <string name="app_opening_animation">App opening animation</string>
     <string name="overlay_fade_in">Fade in</string>
     <string name="overlay_suck_in">Suck in</string>
     <string name="overlay_label">Overlay</string>
@@ -266,7 +269,7 @@
     <string name="prediction_mode_label">Suggestions provider</string>
     <string name="app_predictions_disable_reason_pre_q_description">This feature requires Android 10 or higher</string>
     <string name="prediction_mode_system">System</string>
-    <string name="prediction_mode_lawnchair" translatable="false">Lawnchair</string>
+    <string name="prediction_mode_lawnchair" translatable="false">LauncherX</string>
     <string name="prediction_mode_none">Off</string>
     <string name="prediction_weighted_usage_stats_label">Use device usage data</string>
     <string name="prediction_weighted_usage_stats_description">Use your device\'s usage statistics to make suggestions more accurate</string>
@@ -276,7 +279,7 @@
     <string name="prediction_system_settings">Manage system suggestions</string>
 
     <string name="missing_usage_access_label">Usage access needed</string>
-    <string name="missing_usage_access_desc">To improve app suggestions, turn on usage access for <xliff:g id="name" example="Lawnchair">%1$s</xliff:g></string>
+    <string name="missing_usage_access_desc">To improve app suggestions, turn on usage access for <xliff:g id="name" example="LauncherX">%1$s</xliff:g></string>
 
     <!--
 
@@ -284,7 +287,7 @@
 
     -->
 
-    <string name="set_default_launcher_tip">To access shortcuts and additional features, set Lawnchair as your default launcher</string>
+    <string name="set_default_launcher_tip">To access shortcuts and additional features, set LauncherX as your default launcher</string>
 
     <string name="notification_dots">Notification dots</string>
     <string name="show_notification_count">Show notification counter</string>
@@ -516,13 +519,13 @@
     <string name="torch_action_off">Tap to turn off</string>
 
     <!-- Onboarding strings -->
-    <string name="onboarding_open_settings_title">Set up Lawnchair</string>
+    <string name="onboarding_open_settings_title">Set up LauncherX</string>
     <string name="onboarding_open_settings_subtitle">Long-press on the home screen to open settings</string>
 
-    <string name="onboarding_major_upgrade_title">Meet the new Lawnchair</string>
+    <string name="onboarding_major_upgrade_title">Meet the new LauncherX</string>
     <string name="onboarding_major_upgrade_subtitle">See what\'s new</string>
 
-    <string name="onboarding_welcome">Welcome to Lawnchair!</string>
+    <string name="onboarding_welcome">Welcome to LauncherX!</string>
     <string name="onboarding_swipe_up">Swipe up to open the app drawer</string>
 
     <!-- Smartspacer strings -->
@@ -536,11 +539,11 @@
 
     <!-- Toggle button for enabling Smartspace -->
     <string name="smartspace_widget_toggle_label">Show on home screen</string>
-    <string name="smartspace_widget_toggle_description">At a Glance can be added to the home screen with the Lawnchair widget</string>
+    <string name="smartspace_widget_toggle_description">At a Glance can be added to the home screen with the LauncherX widget</string>
 
     <!-- List of available providers -->
     <string name="smartspace_mode_label">At a Glance provider</string>
-    <string name="smartspace_mode_lawnchair" translatable="false">Lawnchair</string>
+    <string name="smartspace_mode_lawnchair" translatable="false">LauncherX</string>
     <string name="smartspace_mode_google">Google</string>
     <string name="smartspace_mode_google_search">Google Search</string>
     <string name="smartspace_mode_smartspacer" translatable="false">Smartspacer</string>
@@ -627,6 +630,8 @@
     -->
     <string name="gesture_double_tap">Double tap</string>
     <string name="gesture_swipe_up">Swipe up</string>
+    <string name="launchpad_widget_label">Launchpad</string>
+    <string name="launchpad_widget_description">Open the app drawer</string>
     <string name="gesture_swipe_down">Swipe down</string>
     <string name="gesture_two_finger_swipe_down">Two-finger swipe down</string>
     <string name="gesture_two_finger_swipe_up">Two-finger swipe up</string>
@@ -650,7 +655,7 @@
     <string name="pick_app_for_gesture">Pick app</string>
 
     <string name="dt2s_admin_hint_title">Admin permissions required</string>
-    <string name="dt2s_admin_hint">To put the device to sleep, set Lawnchair as a device admin app. Tap \"Open settings\", then tap \"Activate this device admin app.\"</string>
+    <string name="dt2s_admin_hint">To put the device to sleep, set LauncherX as a device admin app. Tap \"Open settings\", then tap \"Activate this device admin app.\"</string>
     <string name="dt2s_admin_warning">Gestures to put the device to sleep will be turned off.</string>
 
     <string name="d2ts_recents_a11y_hint_title">Turn on accessibility service</string>
@@ -660,8 +665,8 @@
     <string name="quick_settings_a11y_hint">open the Quick Settings panel</string>
     <string name="recents_screen_a11y_hint">open the Recents screen</string>
 
-    <string name="generic_a11y_hint">To %1$s, turn on the Lawnchair accessibility service. Tap \"Open settings\", choose \"Lawnchair\" and turn on \"Use Lawnchair.\"</string>
-    <string name="generic_a11y_disclaimer">Lawnchair uses Accessibility\'s `performGlobalAction` method to perform this action. This is a sensitive permission that allows monitoring other apps. However, Lawnchair is not configured for that functionality and receives no events.</string>
+    <string name="generic_a11y_hint">To %1$s, turn on the LauncherX accessibility service. Tap \"Open settings\", choose \"LauncherX\" and turn on \"Use LauncherX.\"</string>
+    <string name="generic_a11y_disclaimer">LauncherX uses Accessibility\'s `performGlobalAction` method to perform this action. This is a sensitive permission that allows monitoring other apps. However, LauncherX is not configured for that functionality and receives no events.</string>
 
     <string name="sleep_mode_label">Sleep mode</string>
     <string name="sleep_mode_auto">Automatic</string>
@@ -674,7 +679,7 @@
     Bug reporting
 
     -->
-    <string name="lawnchair_bug_report">Lawnchair bug report</string>
+    <string name="lawnchair_bug_report">LauncherX bug report</string>
     <string name="crash_report_notif_title">%1$s crashed</string>
     <string name="action_upload_crash_report">Upload crash log</string>
 
@@ -745,7 +750,30 @@
     <string name="edit_mode_page_strip_page">Page %1$d</string>
     <string name="edit_mode_page_strip_set_home">Set as home page</string>
     <string name="edit_mode_page_strip_home_selected">Default home page</string>
-    <string name="edit_mode_page_strip_tip">Drag pages to reorder. Tap the home icon to set your default page.</string>
+    <string name="edit_mode_page_strip_tip">Drag pages to reorder. Use the home icon on a page to make it the default one.</string>
+    <string name="edit_mode_add_widget">Widgets</string>
+    <string name="edit_mode_tidy">Tidy up</string>
+    <string name="edit_mode_home_settings">Home settings</string>
+    <string name="edit_mode_on_long_press_label">Long press for edit mode</string>
+    <string name="edit_mode_on_long_press_description">Long press an empty area of the home screen to enter edit mode. When disabled, the options menu is shown instead.</string>
+    <string name="edit_mode_icon_jiggle_label">Icon jiggle animation</string>
+    <string name="edit_mode_icon_jiggle_description">Shake icons slightly while editing the home screen.</string>
+    <string name="edit_mode_remove_badge_label">Remove badge</string>
+    <string name="edit_mode_remove_badge_description">Show a badge on icons while editing. Tap it to remove the item.</string>
+    <string name="edit_mode_multi_select_label">Multi-select</string>
+    <string name="edit_mode_multi_select_description">Tap icons while editing to select multiple items and run batch actions such as removing, folding or dragging them together.</string>
+    <string name="edit_mode_selection_feedback_label">Selection feedback</string>
+    <string name="edit_mode_selection_feedback_description">Shrink the selected icons and play a short vibration whenever the selection changes.</string>
+    <string name="edit_mode_selection_count">%1$d selected</string>
+    <string name="edit_mode_selection_new_folder">New folder</string>
+    <string name="edit_mode_selection_add_to_folder">Add to folder</string>
+    <string name="edit_mode_selection_merge_folders">Merge folders</string>
+    <string name="edit_mode_selection_remove">Remove</string>
+    <string name="edit_mode_selection_cancel">Cancel</string>
+    <string name="edit_mode_page_strip_label">Page strip</string>
+    <string name="edit_mode_page_strip_description">Show the row of page numbers while editing. Tap a page to jump to it, use the home icon on a page to make it the default one, and drag pages to reorder them. When off, the default page can be set from the bottom bar.</string>
+    <string name="home_screen_editing_label">Home screen editing</string>
+    <string name="home_screen_editing_description">Edit mode, icon animation and other editing options</string>
 
     <string name="popup_menu">Pop-up menu</string>
     <string name="popup_menu_items">Pop-up menu items</string>
@@ -781,7 +809,7 @@
     <string name="search_bar_settings">Search bar settings</string>
     <string name="hotseat_mode_label">Search bar widget</string>
     <string name="hotseat_mode_disabled">Disabled</string>
-    <string name="hotseat_mode_lawnchair" translatable="false">Lawnchair</string>
+    <string name="hotseat_mode_lawnchair" translatable="false">LauncherX</string>
     <string name="hotseat_mode_google_search">Google search bar</string>
 
     <string name="qsb_hotseat_background_transparency">Background opacity</string>
@@ -798,6 +826,23 @@
     <string name="hotseat_bg_color_label">Background color</string>
     <string name="hotseat_bg_corner_radius">Background corner radius</string>
     <string name="hotseat_bg_alpha">Background opacity</string>
+    <string name="hotseat_capsule_bg">Floating capsule background</string>
+    <string name="hotseat_capsule_elevation">Capsule shadow</string>
+    <string name="hotseat_capsule_margin_bottom">Bottom margin</string>
+    <string name="hotseat_capsule_margin_left">Left margin</string>
+    <string name="hotseat_capsule_margin_right">Right margin</string>
+    <string name="hotseat_capsule_margin_top">Top margin</string>
+    <string name="hotseat_capsule_inner_padding_left">Inner padding left</string>
+    <string name="hotseat_capsule_inner_padding_right">Inner padding right</string>
+    <string name="hotseat_capsule_inner_padding_top">Inner padding top</string>
+    <string name="hotseat_capsule_inner_padding_bottom">Inner padding bottom</string>
+    <string name="hotseat_capsule_corner_radius">Corner radius</string>
+    <string name="hotseat_recent_apps_title">Recent apps</string>
+    <string name="hotseat_recent_apps_summary">Show recently used apps in dock</string>
+    <string name="hotseat_recent_apps_max_count">Max recent apps</string>
+    <string name="hotseat_recent_apps_permission_title">Usage access needed</string>
+    <string name="hotseat_recent_apps_permission_summary">Grant usage access to show recent apps in dock</string>
+    <string name="hotseat_recent_apps_permission_button">Grant access</string>
 
 
     <!-- Pause apps shortcut -->
@@ -812,13 +857,20 @@
     <string name="dock_icons">Dock icons</string>
     <string name="dock_rows">Dock rows</string>
     <string name="dock_pages">Dock pages</string>
+    <string name="dock_width_mode">Dock width</string>
+    <string name="dock_width_auto">Auto (phone: full, tablet: content)</string>
+    <string name="dock_width_full">Full width</string>
+    <string name="dock_width_content">Content width</string>
+    <string name="dock_bar_app_spacing">App spacing</string>
+    <string name="dock_bar_left_padding">Left inner padding</string>
+    <string name="dock_bar_right_padding">Right inner padding</string>
     <string name="state_folded">%1$s (folded)</string>
     <string name="state_unfolded">%1$s (unfolded)</string>
     <string name="folded_label">Folded</string>
     <string name="unfolded_label">Unfolded</string>
     <string name="when_folded_label">When folded</string>
     <string name="when_unfolded_label">When unfolded</string>
-    <string name="unfolded_grid_description">Lawnchair pairs two pages together to fill the larger display</string>
+    <string name="unfolded_grid_description">LauncherX pairs two pages together to fill the larger display</string>
     <string name="foldable_columns_error">The folded value must be less than or equal to the unfolded value. It will be automatically adjusted if needed.</string>
     <string name="hotseat_bottom_space_label">Bottom padding</string>
     <string name="page_indicator_height">Page indicator height</string>
@@ -852,7 +904,7 @@
     <string name="search_provider_vivaldi" translatable="false">Vivaldi</string>
     <string name="search_provider_custom">Custom</string>
 
-    <string name="search_provider_sponsored_description">%1$s and Lawnchair have a revenue share agreement.\n\nSearching with %1$s helps support Lawnchair.</string>
+    <string name="search_provider_sponsored_description">Search results are provided by %1$s.</string>
 
     <string name="app_label">App</string>
     <string name="website_label">Website</string>
@@ -894,14 +946,69 @@
 
     <!-- Folder settings -->
     <string name="folder_preview_bg_opacity_label">Icon preview background opacity</string>
+    <string name="folder_preview_margin_label">Preview background margin</string>
     <string name="folder_bg_opacity_label">Folder background opacity</string>
     <string name="folder_preview_bg_color_label">Icon background color</string>
 
     <string name="max_folder_columns">Maximum folder columns</string>
     <string name="max_folder_rows">Maximum folder rows</string>
 
+    <!-- Large folder settings -->
+    <string name="large_folder_label">Large folder</string>
+    <string name="large_folder_description">Background, spacing and icon size</string>
+    <string name="large_folder_show_name_label">Desktop label</string>
+    <string name="large_folder_bg_opacity_label">Background opacity</string>
+    <string name="large_folder_bg_color_label">Background color</string>
+    <string name="large_folder_effects_label">Effects</string>
+    <string name="large_folder_frosted_glass_label">Frosted glass</string>
+    <string name="large_folder_liquid_glass_label">Liquid glass</string>
+    <string name="glass_blur_intensity_label">Blur intensity</string>
+    <string name="liquid_glass_group">Liquid glass</string>
+    <string name="frosted_glass_label">Frosted glass</string>
+    <string name="liquid_glass_description">Refraction, dispersion and specular highlights</string>
+    <string name="frosted_glass_description">Blur and tint for folders and the dock</string>
+    <string name="glass_apply_to">Apply to</string>
+    <string name="restore_defaults">Restore defaults</string>
+    <string name="restore_defaults_confirmation">Restore liquid glass to the original Lens preset?</string>
+    <string name="liquid_glass_master_label">Enable liquid glass</string>
+    <string name="liquid_glass_refraction_label">Refraction strength</string>
+    <string name="liquid_glass_dispersion_label">Chromatic dispersion</string>
+    <string name="liquid_glass_specular_flow_label">Continuous specular flow</string>
+    <string name="liquid_glass_wallpaper_permission_label">Wallpaper access</string>
+    <string name="liquid_glass_wallpaper_permission_desc">Liquid glass samples the wallpaper to build its backdrop. Tap to grant access.</string>
+    <string name="liquid_glass_quality_group">Quality &amp; memory</string>
+    <string name="liquid_glass_quality_label">Liquid glass quality</string>
+    <string name="liquid_glass_quality_desc">Liquid glass caches a wallpaper backdrop. Higher levels sample it at full resolution and look crisper, but keep more memory until the wallpaper changes or the launcher restarts.</string>
+    <string name="liquid_glass_quality_max">Highest — sharpest, about +50 to 70 MB</string>
+    <string name="liquid_glass_quality_high">High — about +30 to 50 MB</string>
+    <string name="liquid_glass_quality_balanced">Balanced — about +15 to 25 MB</string>
+    <string name="liquid_glass_quality_saver">Save memory — previous softer look</string>
+    <string name="folder_group_small_folder">Small folder</string>
+    <string name="folder_group_popup_folder">Popup folder</string>
+    <string name="folder_popup_bg_blur_label">Background blur</string>
+    <string name="folder_popup_bg_blur_strength_label">Background blur intensity</string>
+    <string name="folder_open_centered_label">Center on screen</string>
+    <string name="large_folder_spacing_label">Spacing</string>
+    <string name="large_folder_bg_padding_label">Outer padding</string>
+    <string name="large_folder_bg_inset_label">Background inset</string>
+    <string name="large_folder_icon_gap_label">Icon gap</string>
+    <string name="large_folder_icon_scale_label">Icon size</string>
+    <string name="large_folder_layout_label">Layout</string>
+    <string name="large_folder_align_h_label">Horizontal alignment</string>
+    <string name="large_folder_align_v_label">Vertical alignment</string>
+    <string name="large_folder_max_span_label">Maximum span</string>
+    <string name="large_folder_swiper_label">Swiper</string>
+    <string name="large_folder_swiper_off">Off (+N)</string>
+    <string name="large_folder_swiper_horizontal">Horizontal</string>
+    <string name="large_folder_swiper_vertical">Vertical</string>
+    <string name="large_folder_align_flex_start">Start</string>
+    <string name="large_folder_align_flex_end">End</string>
+    <string name="large_folder_align_center">Center</string>
+    <string name="large_folder_align_space_between">Space between</string>
+    <string name="large_folder_align_space_around">Space around</string>
+
     <!-- Quickstep settings -->
-    <string name="quickswitch_ignored_warning">These settings will be ignored because Lawnchair isn\'t set as the Recents screen provider</string>
+    <string name="quickswitch_ignored_warning">These settings will be ignored because LauncherX isn\'t set as the Recents screen provider</string>
 
     <string name="quickstep_incompatible">Incompatible system integration</string>
     <string name="quickstep_incompatible_description">Your device is configured to have system gestures, known as Quickstep, provided by %1$s, but this version of %1$s isn\'t compatible with your Android version. To continue using your device, uninstall %1$s updates or disable %1$s as a system gesture provider.</string>
@@ -1070,4 +1177,13 @@
     <string name="lawnchair_action_failed">Failed to trigger action</string>
 
     <string name="please_wait">Please wait…</string>
+
+    <!-- Recent apps dock divider -->
+    <string name="hotseat_recent_apps_divider_enabled">Show divider</string>
+    <string name="hotseat_recent_apps_divider_color">Divider color</string>
+    <string name="hotseat_recent_apps_divider_alpha">Divider opacity</string>
+    <string name="hotseat_recent_apps_divider_height">Divider height</string>
+    <string name="hotseat_recent_apps_spacing">App spacing</string>
+    <string name="hotseat_recent_apps_padding_left">Left padding</string>
+    <string name="hotseat_recent_apps_padding_right">Right padding</string>
 </resources>

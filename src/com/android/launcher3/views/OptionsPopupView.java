@@ -59,9 +59,10 @@ import com.google.android.msdl.data.model.MSDLToken;
 import java.util.ArrayList;
 import java.util.List;
 
-import app.lawnchair.preferences2.PreferenceCacheExtensionsKt;
-import app.lawnchair.preferences2.PreferenceManager2;
-import app.lawnchair.ui.popup.LauncherOptionsPopup;
+import com.jerry.launcherx.preferences2.PreferenceCacheExtensionsKt;
+import com.jerry.launcherx.preferences2.PreferenceManager2;
+import com.jerry.launcherx.ui.popup.LauncherOptionEntry;
+import com.jerry.launcherx.ui.popup.LauncherOptionsPopup;
 
 /**
  * Popup shown on long pressing an empty space in launcher
@@ -205,7 +206,25 @@ public class OptionsPopupView<T extends Context & ActivityContext> extends Arrow
      * Returns the list of supported actions
      */
     public static ArrayList<OptionItem> getOptions(Launcher launcher) {
-        return LauncherOptionsPopup.INSTANCE.getLauncherOptions(
+        ArrayList<OptionItem> options = new ArrayList<>();
+        for (LauncherOptionEntry entry : buildOptionEntries(launcher, false /* forceDefaultPage */)) {
+            options.add(entry.getItem());
+        }
+        return options;
+    }
+
+    /**
+     * Same entries as {@link #getOptions(Launcher)}, each tagged with its preference identifier.
+     * The edit-mode action bar is built from this list so it always mirrors the configured
+     * long-press popup entries.
+     */
+    public static List<LauncherOptionEntry> getOptionEntries(Launcher launcher) {
+        return buildOptionEntries(launcher, true /* forceDefaultPage */);
+    }
+
+    private static List<LauncherOptionEntry> buildOptionEntries(
+            Launcher launcher, boolean forceDefaultPage) {
+        return LauncherOptionsPopup.INSTANCE.getLauncherOptionEntries(
             launcher,
             OptionsPopupView::toggleHomeScreenLock,
             OptionsPopupView::startSystemSettings,
@@ -213,7 +232,8 @@ public class OptionsPopupView<T extends Context & ActivityContext> extends Arrow
             OptionsPopupView::enterAllApps,
             OptionsPopupView::startWallpaperPicker,
             OptionsPopupView::onWidgetsClicked,
-            OptionsPopupView::startSettings
+            OptionsPopupView::startSettings,
+            forceDefaultPage
         );
     }
 
@@ -251,7 +271,7 @@ public class OptionsPopupView<T extends Context & ActivityContext> extends Arrow
      * Event handler for the wallpaper picker button that appears after a long press
      * on the home screen.
      */
-    private static boolean startWallpaperPicker(View v) {
+    public static boolean startWallpaperPicker(View v) {
         Launcher launcher = Launcher.getLauncher(v.getContext());
         if (!Utilities.isWallpaperAllowed(launcher)) {
             String message = launcher.getStringCache() != null

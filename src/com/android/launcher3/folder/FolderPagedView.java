@@ -32,6 +32,7 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewDebug;
 
 import androidx.annotation.Nullable;
@@ -106,7 +107,7 @@ public class FolderPagedView extends PagedView<PageIndicatorDots> implements Cli
     private boolean mViewsBound = false;
 
     private boolean mCanAnnouncePageDescription;
-    private boolean mDisallowPagedViewInterceptForIconSwipe; // Lawnchair: Icon swipe gesture feature
+    private boolean mDisallowPagedViewInterceptForIconSwipe; // LauncherX: Icon swipe gesture feature
 
     public FolderPagedView(Context context, AttributeSet attrs) {
         this(
@@ -167,7 +168,7 @@ public class FolderPagedView extends PagedView<PageIndicatorDots> implements Cli
         }
     }
 
-    // Lawnchair: Icon swipe gesture feature
+    // LauncherX: Icon swipe gesture feature
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         if (shouldSkipPagedViewInterceptionForIconSwipe(ev)) {
@@ -176,7 +177,7 @@ public class FolderPagedView extends PagedView<PageIndicatorDots> implements Cli
         return super.onInterceptTouchEvent(ev);
     }
 
-    // Lawnchair: Icon swipe gesture feature
+    // LauncherX: Icon swipe gesture feature
     private boolean shouldSkipPagedViewInterceptionForIconSwipe(MotionEvent ev) {
         switch (ev.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
@@ -205,13 +206,13 @@ public class FolderPagedView extends PagedView<PageIndicatorDots> implements Cli
         }
     }
 
-    // Lawnchair: Icon swipe gesture feature
+    // LauncherX: Icon swipe gesture feature
     private boolean isTouchOnIconWithHorizontalSwipeGesture(float x, float y) {
         BubbleTextView touchedIcon = findIconAtPosition(x, y);
         return touchedIcon != null && touchedIcon.hasConfiguredHorizontalIconSwipeGesture();
     }
 
-    /** Lawnchair: Find icon at specific position */
+    /** LauncherX: Find icon at specific position */
     private BubbleTextView findIconAtPosition(float x, float y) {
         for (int i = getChildCount() - 1; i >= 0; i--) {
             View page = getChildAt(i);
@@ -231,7 +232,7 @@ public class FolderPagedView extends PagedView<PageIndicatorDots> implements Cli
         return null;
     }
 
-    /** Lawnchair: Find icon in cell layout */
+    /** LauncherX: Find icon in cell layout */
     private BubbleTextView findIconInCellLayout(CellLayout cellLayout, float x, float y) {
         ShortcutAndWidgetContainer container = cellLayout.getShortcutsAndWidgets();
         float containerX = x - container.getLeft();
@@ -389,7 +390,7 @@ public class FolderPagedView extends PagedView<PageIndicatorDots> implements Cli
     private CellLayout createAndAddNewPage() {
         DeviceProfile grid = mFolder.mActivityContext.getDeviceProfile();
         CellLayout page = mViewCache.getView(R.layout.folder_page, getContext(), this);
-        // Lawnchair: Find the correct folder size depending on which parent owned them
+        // LauncherX: Find the correct folder size depending on which parent owned them
         if (mFolder.isInAppDrawer()) {
             page.setCellDimensions(grid.getAllAppsProfile().getCellWidthPx(), grid.getAllAppsProfile().getCellHeightPx());
         } else {
@@ -466,7 +467,16 @@ public class FolderPagedView extends PagedView<PageIndicatorDots> implements Cli
             }
 
             if (v != null) {
-                CellLayoutLayoutParams lp = (CellLayoutLayoutParams) v.getLayoutParams();
+                // A view returned to the folder after a failed drop is still attached to, and
+                // still carries the LayoutParams of, whatever parent it was last in — most
+                // often the inline large-folder grid, which is a FrameLayout. Detach it and
+                // rebuild the params rather than cast and re-add blindly.
+                if (v.getParent() instanceof ViewGroup oldParent) {
+                    oldParent.removeView(v);
+                }
+                CellLayoutLayoutParams lp = v.getLayoutParams() instanceof CellLayoutLayoutParams
+                        ? (CellLayoutLayoutParams) v.getLayoutParams()
+                        : new CellLayoutLayoutParams(0, 0, 1, 1);
                 ItemInfo info = (ItemInfo) v.getTag();
                 lp.setCellXY(mOrganizer.getPosForRank(rank));
                 currentPage.addViewToCellLayout(v, -1, info.getViewId(), lp, true);

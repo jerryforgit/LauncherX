@@ -56,16 +56,6 @@
             android:paddingBottom="0dp"
             android:clipToOutline="true"
             android:orientation="vertical">
-            <TextView
-                android:id="@+id/title"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_horizontal"
-                android:textSize="24sp"
-                android:layout_marginTop="24dp"
-                android:textColor="?attr/widgetPickerTitleColor"
-                android:text="@string/widget_button_text"/>
-
             <FrameLayout
                 android:id="@+id/search_bar_container"
                 android:layout_width="match_parent"
@@ -92,20 +82,16 @@
                     android:tint="?attr/widgetPickerWidgetOptionsMenuColor" />
             </FrameLayout>
 
-            <!-- Shown when there are recommendations to display -->
-            <LinearLayout
-                android:id="@+id/widget_recommendations_container"
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp"
-                android:background="@drawable/widgets_surface_background"
-                android:clipToOutline="true"
-                android:orientation="vertical"
-                android:layout_marginHorizontal="@dimen/widget_list_horizontal_margin"
-                android:visibility="gone">
-                <include layout="@layout/widget_recommendations" />
-            </LinearLayout>
+                android:layout_height="match_parent"
+                android:id="@+id/suggestions_header"
+                android:layout_marginHorizontal="@dimen/widget_list_horizontal_margin_two_pane"
+                android:orientation="horizontal"
+                android:paddingBottom="16dp"
+                android:background="?attr/widgetPickerPrimarySurfaceColor"
+                launcher:layout_sticky="true">
+            </FrameLayout>
 
             <com.android.launcher3.workprofile.PersonalWorkSlidingTabStrip
                 android:id="@+id/tabs"
@@ -145,5 +131,13 @@
                     style="?android:attr/borderlessButtonStyle" />
             </com.android.launcher3.workprofile.PersonalWorkSlidingTabStrip>
         </com.android.launcher3.views.StickyHeaderLayout>
+
+        <com.android.launcher3.widget.picker.WidgetsRecyclerView
+            android:id="@+id/search_widgets_list_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingHorizontal="@dimen/widget_list_horizontal_margin_two_pane"
+            android:visibility="gone" />
     </FrameLayout>
 </merge>

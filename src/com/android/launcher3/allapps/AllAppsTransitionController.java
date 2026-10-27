@@ -47,6 +47,7 @@ import androidx.annotation.Nullable;
 import com.android.launcher3.DeviceProfile;
 import com.android.launcher3.DeviceProfile.OnDeviceProfileChangeListener;
 import com.android.launcher3.Flags;
+import com.android.launcher3.Hotseat;
 import com.android.launcher3.Launcher;
 import com.android.launcher3.LauncherState;
 import com.android.launcher3.R;
@@ -66,8 +67,8 @@ import com.android.launcher3.views.ScrimView;
 
 import com.google.android.msdl.data.model.MSDLToken;
 
-import app.lawnchair.preferences2.PreferenceManager2;
-import app.lawnchair.preferences2.PreferenceCacheExtensionsKt;
+import com.jerry.launcherx.preferences2.PreferenceManager2;
+import com.jerry.launcherx.preferences2.PreferenceCacheExtensionsKt;
 
 /**
  * Handles AllApps view transition.
@@ -235,6 +236,12 @@ public class AllAppsTransitionController
      */
     public void setProgress(float progress) {
         mProgress = progress;
+        // The drawer sits above the translucent panel, so fade the dock's glass out while it is
+        // covered instead of leaving a ghost capsule behind the panel. 1 = workspace (visible).
+        Hotseat hotseat = mLauncher.getHotseat();
+        if (hotseat != null) {
+            hotseat.setGlassVisibility(progress);
+        }
         boolean fromBackground =
                 mLauncher.getStateManager().getCurrentStableState() == BACKGROUND_APP;
         // Allow apps panel to shift the full screen if coming from another app.

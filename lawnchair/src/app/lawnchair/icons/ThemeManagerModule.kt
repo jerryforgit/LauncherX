@@ -1,8 +1,8 @@
 package app.lawnchair.icons
 
 import android.content.Context
-import app.lawnchair.preferences.PreferenceManager
-import app.lawnchair.preferences2.PreferenceManager2
+import com.jerry.launcherx.preferences.PreferenceManager
+import com.jerry.launcherx.preferences2.PreferenceManager2
 import com.android.launcher3.LauncherPrefs
 import com.android.launcher3.concurrent.annotations.Ui
 import com.android.launcher3.dagger.ApplicationContext
@@ -27,7 +27,7 @@ class ThemeManagerModule {
         prefs2: PreferenceManager2,
         prefs1: PreferenceManager,
     ): ThemeManager {
-        return LawnchairThemeManager(
+        return LauncherXThemeManager(
             context = context,
             uiExecutor = uiExecutor,
             prefs = prefs,

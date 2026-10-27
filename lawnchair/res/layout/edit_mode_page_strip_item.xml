@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="112dp"
+    android:layout_width="128dp"
     android:layout_height="72dp"
     android:layout_marginStart="6dp"
     android:layout_marginEnd="6dp"
@@ -16,21 +16,20 @@
         android:layout_weight="1"
         android:duplicateParentState="true"
         android:ellipsize="end"
+        android:gravity="center"
         android:maxLines="1"
         android:textColor="?android:attr/textColorPrimary"
         android:textSize="14sp" />
 
-    <ImageButton
-        android:id="@+id/page_strip_home_button"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:minWidth="48dp"
-        android:minHeight="48dp"
-        android:background="@android:color/transparent"
+    <ImageView
+        android:id="@+id/page_strip_home"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginStart="4dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/edit_mode_page_strip_set_home"
-        android:duplicateParentState="true"
-        android:padding="10dp"
-        android:src="@drawable/ic_home_pin"
-        android:tint="@color/edit_mode_page_strip_home_tint" />
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_home_screen"
+        android:tint="?android:attr/textColorPrimary" />
 
 </LinearLayout>

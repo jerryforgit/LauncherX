@@ -40,6 +40,7 @@ import android.content.pm.PackageInstaller.SessionInfo;
 import android.os.Process;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Toast;
@@ -50,6 +51,7 @@ import com.android.launcher3.Flags;
 import com.android.launcher3.InvariantDeviceProfile;
 import com.android.launcher3.Launcher;
 import com.android.launcher3.LauncherSettings;
+import com.android.launcher3.LauncherState;
 import com.android.launcher3.R;
 import com.android.launcher3.apppairs.AppPairIcon;
 import com.android.launcher3.folder.Folder;
@@ -75,6 +77,9 @@ import com.android.launcher3.widget.LauncherAppWidgetProviderInfo;
 import com.android.launcher3.widget.PendingAppWidgetHostView;
 import com.android.launcher3.widget.WidgetAddFlowHandler;
 import com.android.launcher3.widget.WidgetManagerHelper;
+
+import com.jerry.launcherx.preferences2.PreferenceCacheExtensionsKt;
+import com.jerry.launcherx.preferences2.PreferenceManager2;
 
 import java.util.Collections;
 import java.util.Objects;
@@ -103,6 +108,16 @@ public class ItemClickHandler {
         if (!launcher.getWorkspace().isFinishedSwitchingState()) return;
 
         Object tag = v.getTag();
+        // LauncherX: in edit mode, tapping a workspace icon toggles its multi-select state
+        // instead of launching the app, so the user can run batch operations.
+        if (launcher.isInState(LauncherState.EDIT_MODE) && isMultiSelectEnabled(launcher)
+                && isSelectableEditModeItem(v, tag)) {
+            launcher.getEditModeSelection().toggle((ItemInfo) tag);
+            if (isSelectionFeedbackEnabled(launcher)) {
+                v.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK);
+            }
+            return;
+        }
         if (tag instanceof WorkspaceItemInfo) {
             onClickAppShortcut(v, (WorkspaceItemInfo) tag, launcher);
         } else if (tag instanceof FolderInfo) {
@@ -130,6 +145,43 @@ public class ItemClickHandler {
         } else if (tag instanceof ItemClickProxy) {
             ((ItemClickProxy) tag).onItemClicked(v);
         }
+    }
+
+    /**
+     * LauncherX: whether the tapped view is a workspace item that can take part in the edit-mode
+     * multi-selection: an app shortcut or folder icon on the desktop, or an app shown inline
+     * inside a large folder (whose container is the folder, not the desktop), but not an opened
+     * folder child or a hotseat/Dock icon.
+     */
+    private static boolean isSelectableEditModeItem(View v, Object tag) {
+        if (!(tag instanceof ItemInfo itemInfo)) {
+            return false;
+        }
+        if (v instanceof FolderIcon) {
+            return itemInfo.container == LauncherSettings.Favorites.CONTAINER_DESKTOP;
+        }
+        if (!(v instanceof BubbleTextView btv)) {
+            return false;
+        }
+        // A cell of a large folder that is shown inline on the workspace is a workspace item for
+        // selection purposes, even though it is laid out with the folder display and lives in the
+        // folder's container. Open-folder children (same display, different parent) stay excluded.
+        if (com.jerry.launcherx.modern.folder.LargeFolderBinder.isInsideInlineGrid(btv)) {
+            return btv.getIconDisplay() == BubbleTextView.DISPLAY_FOLDER
+                    || btv.getIconDisplay() == BubbleTextView.DISPLAY_WORKSPACE;
+        }
+        return itemInfo.container == LauncherSettings.Favorites.CONTAINER_DESKTOP
+                && btv.getIconDisplay() == BubbleTextView.DISPLAY_WORKSPACE;
+    }
+
+    private static boolean isMultiSelectEnabled(Launcher launcher) {
+        return PreferenceCacheExtensionsKt.firstCached(
+                PreferenceManager2.getInstance(launcher).getEditModeMultiSelect());
+    }
+
+    private static boolean isSelectionFeedbackEnabled(Launcher launcher) {
+        return PreferenceCacheExtensionsKt.firstCached(
+                PreferenceManager2.getInstance(launcher).getEditModeSelectionFeedback());
     }
 
     /**

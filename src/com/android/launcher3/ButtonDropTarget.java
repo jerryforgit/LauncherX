@@ -48,8 +48,8 @@ import com.android.launcher3.views.ActivityContext;
 
 import com.google.android.msdl.data.model.MSDLToken;
 
-import app.lawnchair.theme.color.tokens.ColorTokens;
-import app.lawnchair.theme.drawable.DrawableTokens;
+import com.jerry.launcherx.theme.color.tokens.ColorTokens;
+import com.jerry.launcherx.theme.drawable.DrawableTokens;
 
 /**
  * Implements a DropTarget.

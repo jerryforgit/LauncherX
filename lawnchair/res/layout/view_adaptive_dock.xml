@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.jerry.launcherx.modern.dock.AdaptiveDockView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/adaptive_dock_view"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="bottom|center_horizontal"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp" />

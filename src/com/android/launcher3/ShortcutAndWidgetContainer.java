@@ -43,9 +43,9 @@ import com.android.launcher3.model.data.ItemInfo;
 import com.android.launcher3.views.ActivityContext;
 import com.android.launcher3.widget.LauncherAppWidgetHostView;
 import com.android.launcher3.widget.NavigableAppWidgetHostView;
-import app.lawnchair.preferences2.PreferenceCacheExtensionsKt;
+import com.jerry.launcherx.preferences2.PreferenceCacheExtensionsKt;
 
-import app.lawnchair.preferences2.PreferenceManager2;
+import com.jerry.launcherx.preferences2.PreferenceManager2;
 
 public class ShortcutAndWidgetContainer extends ViewGroup implements FolderIcon.FolderIconParent {
     static final String TAG = "ShortcutAndWidgetContainer";
@@ -330,10 +330,8 @@ public class ShortcutAndWidgetContainer extends ViewGroup implements FolderIcon.
         CellLayoutLayoutParams lp = (CellLayoutLayoutParams) child.getLayoutParams();
         // While the folder is open, the position of the icon cannot change.
         lp.canReorder = false;
-        if (mContainerType == HOTSEAT) {
-            CellLayout cl = (CellLayout) getParent();
-            cl.setFolderLeaveBehindCell(lp.getCellX(), lp.getCellY());
-        }
+        // LauncherX: don't draw the leave-behind circle for hotseat folders. The popup does not
+        // cover the dock cell, so the leftover background stayed visible behind the popup.
     }
 
     @Override

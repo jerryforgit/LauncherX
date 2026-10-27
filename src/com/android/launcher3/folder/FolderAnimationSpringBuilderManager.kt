@@ -45,7 +45,7 @@ class FolderAnimationSpringBuilderManager(
         resetLauncherScale(launcherDelegate.launcher?.workspace, launcherDelegate.launcher?.hotseat)
         val folderAnimData: FolderAnimationData = folder.getAnimationData(isOpening)
         val clipRevealData: ClipRevealData = folder.getClipRevealData(shapeDelegate, folderAnimData)
-        val iconAnimData: List<IconAnimationData> = folder.getIconAnimationDataList(folderAnimData)
+                val iconAnimData: List<IconAnimationData> = folder.getIconAnimationDataList(folderAnimData)
         return FolderSpringAnimatorSet.build(
                 folder = folder,
                 launcherDelegate = launcherDelegate,

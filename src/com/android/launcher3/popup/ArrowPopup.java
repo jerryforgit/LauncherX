@@ -56,8 +56,8 @@ import com.android.launcher3.util.Themes;
 import com.android.launcher3.views.ActivityContext;
 import com.android.launcher3.views.BaseDragLayer;
 
-import app.lawnchair.theme.color.tokens.ColorTokens;
-import app.lawnchair.theme.drawable.DrawableTokens;
+import com.jerry.launcherx.theme.color.tokens.ColorTokens;
+import com.jerry.launcherx.theme.drawable.DrawableTokens;
 
 /**
  * A container for shortcuts to deep links and notifications associated with an app.
@@ -143,7 +143,6 @@ public abstract class ArrowPopup<T extends Context & ActivityContext>
         int popupPrimaryColor = ColorTokens.PopupColorPrimary.resolveColor(context);
         mArrowColor = popupPrimaryColor;
         mElevation = getResources().getDimension(R.dimen.deep_shortcuts_elevation);
-
         // Initialize arrow view
         final Resources resources = getResources();
         mArrowColor = ColorTokens.PopupArrow.resolveColor(context);
@@ -179,6 +178,10 @@ public abstract class ArrowPopup<T extends Context & ActivityContext>
         } else {
             mColors = new int[]{ColorTokens.PopupArrow.resolveColor(context)};
         }
+
+        // The dock's floating capsule is elevated above the drag layer, so the popup must
+        // sit above it or the capsule would be drawn on top of the menu.
+        setElevation(getPopupElevation());
     }
 
     public ArrowPopup(Context context, AttributeSet attrs) {
@@ -269,7 +272,7 @@ public abstract class ArrowPopup<T extends Context & ActivityContext>
 
                 if (isShortcutOrWrapper(view)) {
                     if (totalVisibleShortcuts == 1) {
-                        // Lawnchair-TODO-High: view.setBackgroundResource is use instead
+                        // LauncherX-TODO-High: view.setBackgroundResource is use instead
                         view.setBackground(DrawableTokens.SingleItemPrimary.resolve(getContext()));
                     } else if (totalVisibleShortcuts > 1) {
                         if (numVisibleShortcut == 0) {
@@ -378,9 +381,17 @@ public abstract class ArrowPopup<T extends Context & ActivityContext>
                     mArrowOffsetHorizontal, -mArrowOffsetVertical,
                     !mIsAboveIcon, mIsLeftAligned,
                     mArrowColor));
-            setElevation(mElevation);
-            mArrow.setElevation(mElevation);
+            float elevation = getPopupElevation();
+            setElevation(elevation);
+            mArrow.setElevation(elevation);
         }
+    }
+
+    private float getPopupElevation() {
+        float density = getResources().getDisplayMetrics().density;
+        float hotseatElevation = com.jerry.launcherx.preferences.PreferenceManager
+                .getInstance(getContext()).getHotseatCapsuleElevation().get() * density;
+        return Math.max(mElevation, hotseatElevation + density);
     }
 
     /**
