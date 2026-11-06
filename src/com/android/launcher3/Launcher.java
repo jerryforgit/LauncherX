@@ -2795,6 +2795,14 @@ public class Launcher extends StatefulActivity<LauncherState>
         View match = visibleContainer.getFirstMatch(
                 preferredItem, forFolderMatch(preferredItem),
                 packageAndUserAndApp, forFolderMatch(packageAndUserAndApp));
+        if (match == null) {
+            // Apps launched from the dock's recent-apps strip are not workspace/dock items, so
+            // fall back to the strip icon to keep the close animation pointing at it.
+            Hotseat hotseatForRecents = mWorkspace.getHotseat();
+            if (hotseatForRecents != null) {
+                match = hotseatForRecents.findRecentAppIcon(packageName);
+            }
+        }
         if (match instanceof FolderIcon folderIcon) {
             // For inline large folders, animate to the app's actual grid cell
             // instead of the hidden legacy preview-circle bounds.

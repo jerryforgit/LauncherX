@@ -681,6 +681,19 @@ public class Hotseat extends FrameLayout implements Insettable {
 
     private boolean mRecentPaddingListenerAdded = false;
 
+    /**
+     * Returns the icon of [packageName] inside the recent-apps strip, if the strip is showing it.
+     * Used as a fallback target for the app-close animation.
+     */
+    public View findRecentAppIcon(String packageName) {
+        if (mRecentAppsView == null
+                || mRecentAppsView.getVisibility() != VISIBLE
+                || packageName == null) {
+            return null;
+        }
+        return mRecentAppsView.findAppIcon(packageName);
+    }
+
     private void updateRecentAppsPadding() {
         if (mRecentAppsView == null) {
             requestLayout();

@@ -112,8 +112,7 @@ class RecentAppsView @JvmOverloads constructor(
     }
 
     /** Horizontal gap between two recent-app icons, in pixels. */
-    fun setAppSpacingPx(spacingPx: Int) {
-        val spacing = spacingPx.coerceAtLeast(0)
+    fun setAppSpacingPx(spacingPx: Int) {        val spacing = spacingPx.coerceAtLeast(0)
         if (spacing == appSpacing) return
         appSpacing = spacing
         // Keep the loaded icon views, only re-space them.
@@ -341,6 +340,14 @@ class RecentAppsView @JvmOverloads constructor(
             dividerView = this
         }
     }
+
+    /**
+     * Returns the icon view of [packageName] if it is currently shown in the strip. Used by the
+     * app-close animation so an app launched from the strip scales back into it even when it is
+     * not on the workspace or in the pinned dock.
+     */
+    fun findAppIcon(packageName: String): View? =
+        iconViews[packageName]?.takeIf { it.parent === this && it.isShown }
 
     private fun createIconView(app: RecentAppInfo, animateIn: Boolean): View {
         val container = FrameLayout(context).apply {
