@@ -100,6 +100,7 @@
             android:id="@+id/app_library"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:elevation="40dp"
             android:visibility="gone" />
 
         <include

@@ -51,6 +51,7 @@ class AppLibraryView @JvmOverloads constructor(
     private val density = resources.displayMetrics.density
     private val isDark = Utilities.isDarkTheme(context)
     private val mainHandler = Handler(Looper.getMainLooper())
+    private val columns = if (resources.configuration.screenWidthDp >= 600) 8 else 4
 
     private val cardColor = if (isDark) 0xFF23262B.toInt() else 0xFFFFFFFF.toInt()
     private val pageColor = if (isDark) 0xFF111316.toInt() else 0xFFF4F6F8.toInt()
@@ -189,7 +190,8 @@ class AppLibraryView @JvmOverloads constructor(
                     component = ComponentName(lai.applicationInfo.packageName, lai.name),
                     label = label,
                     icon = icon,
-                    category = runCatching { lai.applicationInfo.category }.getOrDefault(-1),
+                    category = runCatching { lai.applicationInfo.category }
+                        .getOrDefault(ApplicationInfo.CATEGORY_UNDEFINED),
                     info = appInfo,
                 ),
             )
@@ -211,10 +213,33 @@ class AppLibraryView @JvmOverloads constructor(
         else -> context.getString(R.string.app_library_cat_other)
     }
 
-    private fun groupByCategory(entries: List<Entry>): List<Pair<String, List<Entry>>> =
-        entries.groupBy { categoryName(it.category) }
+    private fun groupByCategory(entries: List<Entry>): List<Pair<String, List<Entry>>> {
+        val named = entries.filter { it.category != ApplicationInfo.CATEGORY_UNDEFINED }
+            .groupBy { categoryName(it.category) }
             .toList()
             .sortedByDescending { it.second.size }
+        // Most apps (especially Chinese ones) never declare an ApplicationInfo category, so fall
+        // back to alphabetical sections for those, using Han->Latin transliteration for the initial.
+        val letters = entries.filter { it.category == ApplicationInfo.CATEGORY_UNDEFINED }
+            .groupBy { initialOf(it.label) }
+            .toSortedMap(compareBy { if (it == "#") "\uFFFF" else it })
+            .toList()
+        return named + letters
+    }
+
+    private fun initialOf(label: String): String {
+        val first = label.trim().firstOrNull() ?: return "#"
+        val latin = if (first.code >= 0x2E80) {
+            runCatching {
+                android.icu.text.Transliterator.getInstance("Han-Latin")
+                    .transliterate(first.toString())
+            }.getOrNull()
+        } else {
+            first.toString()
+        }
+        val letter = latin?.firstOrNull()?.uppercaseChar() ?: return "#"
+        return if (letter in 'A'..'Z') letter.toString() else "#"
+    }
 
     private fun renderGroups(groups: List<Pair<String, List<Entry>>>) {
         val container = catsRoot ?: return
@@ -257,7 +282,7 @@ class AppLibraryView @JvmOverloads constructor(
         )
         var row: LinearLayout? = null
         entries.forEachIndexed { index, entry ->
-            if (index % 4 == 0) {
+            if (index % columns == 0) {
                 row = LinearLayout(context).apply {
                     orientation = LinearLayout.HORIZONTAL
                 }
@@ -268,8 +293,8 @@ class AppLibraryView @JvmOverloads constructor(
         // Pad the last row so items keep their column width.
         val lastRow = row
         if (lastRow != null) {
-            val missing = 4 - (entries.size % 4)
-            if (missing in 1..3) {
+            val missing = columns - (entries.size % columns)
+            if (missing in 1 until columns) {
                 repeat(missing) {
                     lastRow.addView(
                         View(context),
