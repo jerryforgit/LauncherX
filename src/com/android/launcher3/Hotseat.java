@@ -948,6 +948,23 @@ public class Hotseat extends FrameLayout implements Insettable {
                 && y >= mQsb.getTop() && y < mQsb.getBottom();
     }
 
+    /**
+     * True when the touch is inside the recent-apps strip. The strip is a sibling of the pager and
+     * has to handle its own clicks; the paged-dock interception below would otherwise swallow them
+     * and make the icons unresponsive.
+     */
+    private boolean isTouchOnRecentApps(MotionEvent ev) {
+        if (mRecentAppsView == null
+                || mRecentAppsView.getVisibility() != VISIBLE
+                || mIconsContainer == null) {
+            return false;
+        }
+        float x = ev.getX() - mIconsContainer.getLeft();
+        float y = ev.getY() - mIconsContainer.getTop();
+        return x >= mRecentAppsView.getLeft() && x < mRecentAppsView.getRight()
+                && y >= mRecentAppsView.getTop() && y < mRecentAppsView.getBottom();
+    }
+
     private MotionEvent obtainPagerEvent(MotionEvent ev) {
         MotionEvent pagerEv = MotionEvent.obtain(ev);
         pagerEv.offsetLocation(-mIconsContainer.getLeft() - mPagedView.getLeft(),
@@ -958,7 +975,7 @@ public class Hotseat extends FrameLayout implements Insettable {
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         int yThreshold = getMeasuredHeight() - getPaddingBottom();
-        if (ev.getY() > yThreshold || isTouchOnQsb(ev)) {
+        if (ev.getY() > yThreshold || isTouchOnQsb(ev) || isTouchOnRecentApps(ev)) {
             return false;
         }
 
