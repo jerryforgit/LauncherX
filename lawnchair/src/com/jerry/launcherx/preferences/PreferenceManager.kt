@@ -205,6 +205,8 @@ class PreferenceManager @Inject constructor(
     val dockRowCollapsed = BoolPref("pref_dockRowCollapsed", false)
 
     val hotseatRecentAppsEnabled = BoolPref("pref_hotseatRecentAppsEnabled", false, recreate)
+    /** Persisted contents of the dock's recent-apps strip, so it survives launcher restarts. */
+    val recentAppsStrip = StringPref("pref_recentAppsStrip", "")
     val hotseatRecentAppsMaxCount = IntPref("pref_hotseatRecentAppsMaxCount", 3) {
         RecentAppsManager.getInstance(context).refreshNow()
     }

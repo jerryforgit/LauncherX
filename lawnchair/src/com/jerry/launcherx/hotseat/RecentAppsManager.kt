@@ -34,6 +34,13 @@ class RecentAppsManager(private val context: Context) {
 
     private val launcherApps =
         context.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
+    private val prefs = PreferenceManager.getInstance(context)
+
+    init {
+        // The strip is meant to be stable: restoring the last known list immediately keeps the
+        // icons visible after a launcher restart (the usage query alone only knows the last week).
+        _recentApps.value = loadPersisted()
+    }
 
     fun hasUsagePermission(): Boolean {
         val appOps = context.getSystemService(Context.APP_OPS_SERVICE)
@@ -59,9 +66,77 @@ class RecentAppsManager(private val context: Context) {
     fun refresh() {
         val excludePackages = excludeProvider()
         scope.launch {
-            val apps = queryRecentApps(excludePackages)
-            _recentApps.value = apps
+            val fresh = queryRecentApps(excludePackages)
+            // Never drop entries just because they fell out of the usage window: only a newly
+            // used app should push the oldest one out (or an uninstall / pin change).
+            val merged = mergeRecentApps(fresh, _recentApps.value, excludePackages)
+            _recentApps.value = merged
+            persist(merged)
         }
+    }
+
+    private fun mergeRecentApps(
+        fresh: List<RecentAppInfo>,
+        previous: List<RecentAppInfo>,
+        excludePackages: Set<String>,
+    ): List<RecentAppInfo> {
+        val merged = LinkedHashMap<String, RecentAppInfo>()
+        fresh.forEach { merged[it.packageName] = it }
+        previous.forEach { merged.putIfAbsent(it.packageName, it) }
+        return merged.values
+            .filter { it.packageName !in excludePackages }
+            .filter { isLaunchable(it.packageName) }
+            .take(maxCount)
+            .map { app ->
+                // Refresh a stale label (e.g. after an app update).
+                val label = currentLabel(app.packageName)
+                if (label != null && label != app.label) app.copy(label = label) else app
+            }
+    }
+
+    private fun isLaunchable(packageName: String): Boolean = runCatching {
+        launcherApps.getActivityList(packageName, Process.myUserHandle()).isNotEmpty()
+    }.getOrDefault(false)
+
+    private fun currentLabel(packageName: String): String? = runCatching {
+        val pm = context.packageManager
+        pm.getApplicationLabel(pm.getApplicationInfo(packageName, 0)).toString()
+    }.getOrNull()
+
+    private fun loadPersisted(): List<RecentAppInfo> {
+        val raw = runCatching { prefs.recentAppsStrip.get() }.getOrNull()
+        if (raw.isNullOrEmpty()) return emptyList()
+        return runCatching {
+            val array = org.json.JSONArray(raw)
+            buildList {
+                for (i in 0 until array.length()) {
+                    val item = array.optJSONObject(i) ?: continue
+                    val pkg = item.optString("pkg")
+                    if (pkg.isEmpty() || !isLaunchable(pkg)) continue
+                    add(
+                        RecentAppInfo(
+                            packageName = pkg,
+                            label = item.optString("label"),
+                            lastUsedTime = item.optLong("time"),
+                        ),
+                    )
+                }
+            }
+        }.getOrDefault(emptyList())
+    }
+
+    private fun persist(apps: List<RecentAppInfo>) {
+        val array = org.json.JSONArray()
+        apps.forEach { app ->
+            array.put(
+                org.json.JSONObject().apply {
+                    put("pkg", app.packageName)
+                    put("label", app.label)
+                    put("time", app.lastUsedTime)
+                },
+            )
+        }
+        runCatching { prefs.recentAppsStrip.set(array.toString()) }
     }
 
     fun refreshNow() {
@@ -144,7 +219,11 @@ class RecentAppsManager(private val context: Context) {
 
     companion object {
         private const val TAG = "RecentAppsManager"
-        private const val USAGE_WINDOW_MS = 24 * 60 * 60 * 1000L
+        /**
+         * How far back the usage query looks. This only seeds/updates the strip; entries are kept
+         * after they age out, so the window can be wider than the 24h it used to be.
+         */
+        private const val USAGE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000L
 
         @Volatile
         private var instance: RecentAppsManager? = null
