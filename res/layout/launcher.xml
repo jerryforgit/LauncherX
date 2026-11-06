@@ -69,6 +69,12 @@
             android:id="@+id/scrim_view"
             android:background="@android:color/transparent" />
 
+        <com.jerry.launcherx.applibrary.AppLibraryView
+            android:id="@+id/app_library"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
+
         <include
             android:id="@+id/overview_panel"
             layout="@layout/overview_panel" />

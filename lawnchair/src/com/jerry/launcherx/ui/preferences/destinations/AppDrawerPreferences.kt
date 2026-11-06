@@ -89,6 +89,11 @@ fun AppDrawerPreferences(
                 subtitle = resources.getQuantityString(R.plurals.apps_count, hiddenApps.size, hiddenApps.size),
             )
             SearchBarPreference(SearchRoute.DRAWER_SEARCH, showLabel = false)
+            SwitchPreference(
+                adapter = prefs.appLibraryEnabled.getAdapter(),
+                label = stringResource(id = R.string.app_library_label),
+                description = stringResource(id = R.string.app_library_description),
+            )
             NavigationActionPreference(
                 label = stringResource(R.string.suggestion_pref_screen_title),
                 destination = Predictions,

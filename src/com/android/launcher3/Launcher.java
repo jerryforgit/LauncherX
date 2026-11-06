@@ -154,6 +154,8 @@ import android.view.WindowInsetsAnimation.Callback;
 import android.view.WindowManager.LayoutParams;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.animation.OvershootInterpolator;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.Toast;
 import android.window.BackEvent;
 import android.window.OnBackAnimationCallback;
@@ -314,6 +316,16 @@ public class Launcher extends StatefulActivity<LauncherState>
 
     private static final float BOUNCE_ANIMATION_TENSION = 1.3f;
 
+    /** Duration of the app-library slide in/out animation. */
+    private static final int APP_LIBRARY_ANIM_DURATION = 260;
+
+    /**
+     * Package of the app that was last started from the dock's recent-apps strip (null otherwise).
+     * Used so the close animation returns to the strip icon even when the app also exists on the
+     * workspace or in the pinned dock.
+     */
+    private static String sLastLaunchedFromRecents;
+
     /**
      * The last launcher item that started an activity. Used as a fallback when the platform does
      * not return the launch cookie, so the close animation returns to the icon that opened the
@@ -356,6 +368,8 @@ public class Launcher extends StatefulActivity<LauncherState>
     Workspace<?> mWorkspace;
     @Thunk
     DragLayer mDragLayer;
+    /** iOS-style app library shown when swiping past the last workspace page. */
+    private com.jerry.launcherx.applibrary.AppLibraryView mAppLibraryView;
 
     private WidgetManagerHelper mAppWidgetManager;
     private LauncherWidgetHolder mAppWidgetHolder;
@@ -1345,6 +1359,7 @@ public class Launcher extends StatefulActivity<LauncherState>
         mDragLayer = findViewById(R.id.drag_layer);
         mFocusHandler = mDragLayer.getFocusIndicatorHelper();
         mWorkspace = mDragLayer.findViewById(R.id.workspace);
+        mAppLibraryView = mDragLayer.findViewById(R.id.app_library);
         mEditModePageStrip = mDragLayer.findViewById(R.id.edit_mode_page_strip);
         mEditModeActionBar = mDragLayer.findViewById(R.id.edit_mode_action_bar);
         mEditModeSelectionBar = mDragLayer.findViewById(R.id.edit_mode_selection_bar);
@@ -1664,6 +1679,11 @@ public class Launcher extends StatefulActivity<LauncherState>
         }
         TraceHelper.INSTANCE.beginSection(ON_NEW_INTENT_EVT);
         super.onNewIntent(intent);
+
+        // Pressing HOME while the app library is open should return to the workspace.
+        if (isAppLibraryVisible()) {
+            hideAppLibrary();
+        }
 
         boolean alreadyOnHome = hasWindowFocus() && ((intent.getFlags() &
                 Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT)
@@ -2473,9 +2493,56 @@ public class Launcher extends StatefulActivity<LauncherState>
         }
     }
 
+    /**
+     * Shows the iOS-style app library, sliding in from the right. Triggered by swiping past the
+     * last workspace page when the feature is enabled.
+     */
+    public void showAppLibrary() {
+        if (mAppLibraryView == null || mAppLibraryView.getVisibility() == View.VISIBLE) {
+            return;
+        }
+        mAppLibraryView.prepare();
+        mAppLibraryView.setVisibility(View.VISIBLE);
+        mAppLibraryView.setTranslationX(mDragLayer.getWidth());
+        mAppLibraryView.animate()
+                .translationX(0f)
+                .setDuration(APP_LIBRARY_ANIM_DURATION)
+                .setInterpolator(new DecelerateInterpolator(1.5f))
+                .start();
+    }
+
+    /** Hides the app library, sliding it back out to the right. */
+    public void hideAppLibrary() {
+        if (mAppLibraryView == null || mAppLibraryView.getVisibility() != View.VISIBLE) {
+            return;
+        }
+        mAppLibraryView.animate()
+                .translationX(mDragLayer.getWidth())
+                .setDuration(APP_LIBRARY_ANIM_DURATION)
+                .setInterpolator(new AccelerateInterpolator(1.5f))
+                .withEndAction(() -> mAppLibraryView.setVisibility(View.GONE))
+                .start();
+    }
+
+    public boolean isAppLibraryVisible() {
+        return mAppLibraryView != null && mAppLibraryView.getVisibility() == View.VISIBLE;
+    }
+
+    /**
+     * Marks that [packageName] was just launched from the dock's recent-apps strip, so the close
+     * animation returns to that strip icon instead of a workspace/dock duplicate.
+     */
+    public void markLaunchedFromRecentStrip(String packageName) {
+        sLastLaunchedFromRecents = packageName;
+    }
+
     @Override
     @TargetApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     public void onBackPressed() {
+        if (isAppLibraryVisible()) {
+            hideAppLibrary();
+            return;
+        }
         getOnBackAnimationCallback().onBackInvoked();
     }
 
@@ -2509,6 +2576,7 @@ public class Launcher extends StatefulActivity<LauncherState>
         // strip): some ROMs do not hand the launch cookie back on close, and package matching
         // would otherwise land on a duplicate icon (the workspace copy instead of the dock one).
         sLastLaunchedItem = item;
+        sLastLaunchedFromRecents = null;
         if (!hasBeenResumed()) {
             RunnableList result = new RunnableList();
             // Workaround an issue where the WM launch animation is clobbered when finishing the
@@ -2746,6 +2814,15 @@ public class Launcher extends StatefulActivity<LauncherState>
      */
     public @Nullable View getFirstHomeElementForAppClose(
             @Nullable StableViewInfo svi, String packageName, UserHandle user) {
+        // An app opened from the recent-apps strip always returns to that strip icon, even when it
+        // is also present on the workspace or in the pinned dock.
+        if (packageName != null && packageName.equals(sLastLaunchedFromRecents)) {
+            Hotseat hotseat = mWorkspace.getHotseat();
+            View stripIcon = hotseat == null ? null : hotseat.findRecentAppIcon(packageName);
+            if (stripIcon != null) {
+                return stripIcon;
+            }
+        }
         final Predicate<ItemInfo> preferredItem = svi == null ? i -> false : svi::matches;
         final Predicate<ItemInfo> packageAndUserAndApp = info -> info != null
                 && info.itemType == ITEM_TYPE_APPLICATION

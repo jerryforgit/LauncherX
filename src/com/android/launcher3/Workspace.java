@@ -232,6 +232,12 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
     /** Duration for a batch-drag follower to glide from the release point into its cell. */
     private static final long SETTLE_ANIMATION_DURATION = 200L;
 
+    /** Fraction of the screen width a swipe must cover to open the app library. */
+    private static final float APP_LIBRARY_SWIPE_THRESHOLD = 0.18f;
+    private float mAppLibraryDownX;
+    private float mAppLibraryDownY;
+    private boolean mAppLibrarySwipeArmed;
+
     /**
      * Re-applies the workspace padding and the page-indicator inset after the dock geometry
      * changed (e.g. the dock was collapsed or the bottom margin preference changed).
@@ -1370,7 +1376,42 @@ public class Workspace<T extends View & PageIndicator> extends PagedView<T>
         if (isTrackpadMultiFingerSwipe(ev)) {
             return false;
         }
+        trackAppLibrarySwipe(ev);
         return super.onTouchEvent(ev);
+    }
+
+    /**
+     * Opens the app library when the user swipes left on the last page (there is nothing further
+     * to scroll to). Only observes the stream; the workspace still handles it normally.
+     */
+    private void trackAppLibrarySwipe(MotionEvent ev) {
+        switch (ev.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN:
+                mAppLibraryDownX = ev.getX();
+                mAppLibraryDownY = ev.getY();
+                mAppLibrarySwipeArmed = mPreferenceManger.getAppLibraryEnabled().get()
+                        && mLauncher.isInState(LauncherState.NORMAL)
+                        && !isSwitchingState()
+                        && getPageCount() > 0
+                        && getNextPage() == getPageCount() - 1;
+                break;
+            case MotionEvent.ACTION_UP:
+                if (mAppLibrarySwipeArmed) {
+                    float dx = ev.getX() - mAppLibraryDownX;
+                    float dy = Math.abs(ev.getY() - mAppLibraryDownY);
+                    if (dx < -getWidth() * APP_LIBRARY_SWIPE_THRESHOLD
+                            && Math.abs(dx) > dy * 1.5f) {
+                        mLauncher.showAppLibrary();
+                    }
+                }
+                mAppLibrarySwipeArmed = false;
+                break;
+            case MotionEvent.ACTION_CANCEL:
+                mAppLibrarySwipeArmed = false;
+                break;
+            default:
+                break;
+        }
     }
 
     @Override

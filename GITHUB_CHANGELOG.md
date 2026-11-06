@@ -29,6 +29,8 @@ Highlights in this build:
   glyphs share one family/weight (Google Sans Flex has no CJK coverage).
 - Liquid glass: `docs/LIQUID_GLASS.md` documents the whole pipeline (backdrop cache,
   refraction shader, parameters, pitfalls) for reuse in other projects.
+- **App Library** (App drawer settings): an iOS-style library grouped by category, opened by
+  swiping past the last home screen page.
 - Remove LeakCanary from debug builds, so the separate “Leaks” launcher entry is gone.
 - Source package renamed from `app.lawnchair` to `com.jerry.launcherx`
   (`app.lawnchair.icons`, `com.android.launcher3`, and the external

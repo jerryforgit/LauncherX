@@ -932,4 +932,18 @@
     <string name="lawnchair_actions">操作</string>
     <string name="lawnchair_action_failed">未能触发操作</string>
     <string name="please_wait">请稍等…</string>
+    <string name="app_library_label">资源库</string>
+    <string name="app_library_description">在最右侧桌面继续向左滑动，打开按类别整理的应用资源库</string>
+    <string name="app_library_title">资源库</string>
+    <string name="app_library_close">关闭</string>
+    <string name="app_library_search_hint">搜索应用</string>
+    <string name="app_library_empty">没有应用</string>
+    <string name="app_library_cat_social">社交</string>
+    <string name="app_library_cat_games">游戏</string>
+    <string name="app_library_cat_media">影音与照片</string>
+    <string name="app_library_cat_news">资讯</string>
+    <string name="app_library_cat_maps">导航</string>
+    <string name="app_library_cat_productivity">效率</string>
+    <string name="app_library_cat_utilities">工具</string>
+    <string name="app_library_cat_other">其他</string>
 </resources>

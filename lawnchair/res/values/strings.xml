@@ -1186,4 +1186,18 @@
     <string name="hotseat_recent_apps_spacing">App spacing</string>
     <string name="hotseat_recent_apps_padding_left">Left padding</string>
     <string name="hotseat_recent_apps_padding_right">Right padding</string>
+    <string name="app_library_label">App Library</string>
+    <string name="app_library_description">Swipe past the last home screen page to open an iOS-style library of all apps grouped by category</string>
+    <string name="app_library_title">App Library</string>
+    <string name="app_library_close">Close</string>
+    <string name="app_library_search_hint">Search apps</string>
+    <string name="app_library_empty">No apps</string>
+    <string name="app_library_cat_social">Social</string>
+    <string name="app_library_cat_games">Games</string>
+    <string name="app_library_cat_media">Photo &amp; Video</string>
+    <string name="app_library_cat_news">News</string>
+    <string name="app_library_cat_maps">Navigation</string>
+    <string name="app_library_cat_productivity">Productivity</string>
+    <string name="app_library_cat_utilities">Utilities</string>
+    <string name="app_library_cat_other">Other</string>
 </resources>

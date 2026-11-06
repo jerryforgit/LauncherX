@@ -424,6 +424,7 @@ class RecentAppsView @JvmOverloads constructor(
                 val launcher = LauncherXApp.launcher
                 if (launcher != null) {
                     launcher.startActivitySafely(sourceView, intent, null)
+                    launcher.markLaunchedFromRecentStrip(packageName)
                 } else {
                     context.startActivity(intent)
                 }

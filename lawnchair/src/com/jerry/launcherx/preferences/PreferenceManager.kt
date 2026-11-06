@@ -204,6 +204,12 @@ class PreferenceManager @Inject constructor(
      */
     val dockRowCollapsed = BoolPref("pref_dockRowCollapsed", false)
 
+    /**
+     * iOS-style app library: swipe past the last workspace page to open a category view of all
+     * apps. Read at gesture time, so no activity recreate is needed.
+     */
+    val appLibraryEnabled = BoolPref("pref_appLibraryEnabled", false)
+
     val hotseatRecentAppsEnabled = BoolPref("pref_hotseatRecentAppsEnabled", false, recreate)
     /** Persisted contents of the dock's recent-apps strip, so it survives launcher restarts. */
     val recentAppsStrip = StringPref("pref_recentAppsStrip", "")
