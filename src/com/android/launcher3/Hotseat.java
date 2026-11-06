@@ -227,7 +227,7 @@ public class Hotseat extends FrameLayout implements Insettable {
             // dock icon row (blends into the app icon row) rather than floating on top.
             mIconsContainer.addView(mRecentAppsView);
             com.jerry.launcherx.hotseat.RecentAppsManager.Companion.getInstance(context)
-                    .startObserving(() -> getPinnedDockPackages());
+                    .startObserving();
             mRecentAppsView.setOnVisibilityChangedListener(this::updateRecentAppsPadding);
             // Apply the already-loaded list right away: after an in-app restart the
             // lifecycle-bound collector may attach later (or never, depending on the

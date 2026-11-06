@@ -30,7 +30,6 @@ class RecentAppsManager(private val context: Context) {
     val recentApps: StateFlow<List<RecentAppInfo>> = _recentApps.asStateFlow()
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private var excludeProvider: () -> Set<String> = { emptySet() }
 
     private val launcherApps =
         context.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
@@ -53,23 +52,18 @@ class RecentAppsManager(private val context: Context) {
         return mode == android.app.AppOpsManager.MODE_ALLOWED
     }
 
-    fun startObserving(provider: () -> Set<String>) {
-        // Initial load only; further updates are triggered on every return to
-        // the desktop (Launcher.onResume) and when an app is launched from
-        // the strip itself (refreshNow). The exclude set is obtained lazily on
-        // the calling (main) thread so it reflects the pinned dock once the
-        // model has been bound, instead of a stale empty snapshot taken here.
-        excludeProvider = provider
+    fun startObserving() {
+        // The strip is an independent "recently opened" history: it intentionally includes apps
+        // that are also pinned in the dock (the dock and the recents strip are different things).
         refresh()
     }
 
     fun refresh() {
-        val excludePackages = excludeProvider()
         scope.launch {
-            val fresh = queryRecentApps(excludePackages)
+            val fresh = queryRecentApps()
             // Never drop entries just because they fell out of the usage window: only a newly
-            // used app should push the oldest one out (or an uninstall / pin change).
-            val merged = mergeRecentApps(fresh, _recentApps.value, excludePackages)
+            // used app should push the oldest one out (or an uninstall).
+            val merged = mergeRecentApps(fresh, _recentApps.value)
             _recentApps.value = merged
             persist(merged)
         }
@@ -78,13 +72,11 @@ class RecentAppsManager(private val context: Context) {
     private fun mergeRecentApps(
         fresh: List<RecentAppInfo>,
         previous: List<RecentAppInfo>,
-        excludePackages: Set<String>,
     ): List<RecentAppInfo> {
         val merged = LinkedHashMap<String, RecentAppInfo>()
         fresh.forEach { merged[it.packageName] = it }
         previous.forEach { merged.putIfAbsent(it.packageName, it) }
         return merged.values
-            .filter { it.packageName !in excludePackages }
             .filter { isLaunchable(it.packageName) }
             .take(maxCount)
             .map { app ->
@@ -147,9 +139,7 @@ class RecentAppsManager(private val context: Context) {
         get() = PreferenceManager.getInstance(context)
             .hotseatRecentAppsMaxCount.get().coerceIn(1, 10)
 
-    private suspend fun queryRecentApps(
-        excludePackages: Set<String>,
-    ): List<RecentAppInfo> = withContext(Dispatchers.IO) {
+    private suspend fun queryRecentApps(): List<RecentAppInfo> = withContext(Dispatchers.IO) {
         if (!hasUsagePermission()) {
             return@withContext emptyList()
         }
@@ -177,7 +167,7 @@ class RecentAppsManager(private val context: Context) {
                 continue
             }
             val pkg = event.packageName ?: continue
-            if (pkg == context.packageName || excludePackages.contains(pkg)) continue
+            if (pkg == context.packageName) continue
             val existing = packageLastUsed[pkg] ?: 0L
             if (event.timeStamp > existing) {
                 packageLastUsed[pkg] = event.timeStamp
