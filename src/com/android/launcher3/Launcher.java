@@ -315,6 +315,13 @@ public class Launcher extends StatefulActivity<LauncherState>
     private static final float BOUNCE_ANIMATION_TENSION = 1.3f;
 
     /**
+     * The last launcher item that started an activity. Used as a fallback when the platform does
+     * not return the launch cookie, so the close animation returns to the icon that opened the
+     * app (dock copy, workspace copy, folder copy, ...) instead of the first package match.
+     */
+    private static ItemInfo sLastLaunchedItem;
+
+    /**
      * IntentStarter uses request codes starting with this. This must be greater than all activity
      * request codes used internally.
      */
@@ -2498,6 +2505,10 @@ public class Launcher extends StatefulActivity<LauncherState>
     @Override
     public RunnableList startActivitySafely(View v, Intent intent, ItemInfo item) {
         LargeFolderBinder.setLastInlineLaunch(v, item);
+        // Remember the exact item that was launched (null when there is none, e.g. the recents
+        // strip): some ROMs do not hand the launch cookie back on close, and package matching
+        // would otherwise land on a duplicate icon (the workspace copy instead of the dock one).
+        sLastLaunchedItem = item;
         if (!hasBeenResumed()) {
             RunnableList result = new RunnableList();
             // Workaround an issue where the WM launch animation is clobbered when finishing the
@@ -2740,6 +2751,14 @@ public class Launcher extends StatefulActivity<LauncherState>
                 && info.itemType == ITEM_TYPE_APPLICATION
                 && info.user.equals(user)
                 && TextUtils.equals(info.getTargetPackage(), packageName);
+        // Fallback for platforms that do not deliver the launch cookie: match the exact item that
+        // was launched, so a dock icon does not animate back to its workspace duplicate.
+        final ItemInfo lastLaunched = sLastLaunchedItem;
+        final Predicate<ItemInfo> lastLaunchedItem = info -> lastLaunched != null
+                && info != null
+                && info.id == lastLaunched.id
+                && info.container == lastLaunched.container
+                && TextUtils.equals(info.getTargetPackage(), packageName);
 
         // Look for the item inside the folder at the current page
         Folder folder = Folder.getOpen(this);
@@ -2794,6 +2813,7 @@ public class Launcher extends StatefulActivity<LauncherState>
         // Order: Preferred item by itself or in folder, then by matching package/user
         View match = visibleContainer.getFirstMatch(
                 preferredItem, forFolderMatch(preferredItem),
+                lastLaunchedItem, forFolderMatch(lastLaunchedItem),
                 packageAndUserAndApp, forFolderMatch(packageAndUserAndApp));
         if (match == null) {
             // Apps launched from the dock's recent-apps strip are not workspace/dock items, so
